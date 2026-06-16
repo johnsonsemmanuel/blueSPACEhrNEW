@@ -1,0 +1,141 @@
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { CalendarCheck, XCircle, Trash2 } from 'lucide-react'
+import api from '../lib/api'
+import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
+import { statusBadge } from '../components/ui/Badge'
+import toast from 'react-hot-toast'
+
+export default function MyLeaves() {
+  const [leaves, setLeaves] = useState([])
+  const [filter, setFilter] = useState('All')
+
+  useEffect(() => {
+    api.get('/leaves').then(r => setLeaves(r.data)).catch(() => {})
+  }, [])
+
+  const filtered = filter === 'All' ? leaves : leaves.filter(l => l.status === filter)
+
+  const handleCancel = async (id) => {
+    if (!confirm('Are you sure you want to cancel this leave request?')) return
+    try {
+      await api.put(`/leaves/${id}/cancel`)
+      toast.success('Leave request cancelled')
+      setLeaves(leaves.map(l => l.id === id ? { ...l, status: 'Cancelled' } : l))
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to cancel')
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to permanently delete this leave request? This action cannot be undone.')) return
+    try {
+      await api.delete(`/leaves/${id}`)
+      toast.success('Leave request deleted')
+      setLeaves(leaves.filter(l => l.id !== id))
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to delete')
+    }
+  }
+
+  return (
+    <div className="w-full">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
+              <CalendarCheck size={18} className="text-deep-600" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-deep-600">My Leaves</h1>
+              <p className="text-xs text-gray-500">View and track your leave requests</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                filter === f ? 'bg-deep-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <Card padding={false}>
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <CalendarCheck size={36} className="mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-medium">No leave records found</p>
+              <p className="text-xs mt-1">Submit a leave request to get started</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 font-medium uppercase tracking-wider border-b border-gray-100">
+                    <th className="px-5 py-4">Type</th>
+                    <th className="px-5 py-4">Start</th>
+                    <th className="px-5 py-4">End</th>
+                    <th className="px-5 py-4">Days</th>
+                    <th className="px-5 py-4">Reason</th>
+                    <th className="px-5 py-4">Handover</th>
+                    <th className="px-5 py-4">Status</th>
+                    <th className="px-5 py-4">Remark</th>
+                    <th className="px-5 py-4"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((leave, i) => (
+                    <tr key={leave.id} className={`${i !== filtered.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                      <td className="px-5 py-4 font-medium text-deep-600">
+                        {leave.leave_type_name}{leave.is_half_day ? ' (½)' : ''}
+                      </td>
+                      <td className="px-5 py-4 text-gray-600 whitespace-nowrap">{leave.start_date}</td>
+                      <td className="px-5 py-4 text-gray-600 whitespace-nowrap">{leave.end_date}</td>
+                      <td className="px-5 py-4">{leave.total_leave_days}</td>
+                      <td className="px-5 py-4 text-gray-500 max-w-[150px] truncate">{leave.leave_reason}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs max-w-[120px] truncate">
+                        {leave.handover_name || '–'}
+                      </td>
+                      <td className="px-5 py-4">{statusBadge(leave.status)}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs max-w-[120px] truncate">{leave.remark || '–'}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex gap-1.5">
+                          {leave.status === 'Pending' && (
+                            <>
+                              <button
+                                onClick={() => handleCancel(leave.id)}
+                                className="p-1.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                                title="Cancel Leave"
+                              >
+                                <XCircle size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(leave.id)}
+                                className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                title="Delete Leave"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+    </div>
+  )
+}
