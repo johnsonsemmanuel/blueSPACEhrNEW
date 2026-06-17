@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight } from 'lucide-react'
+import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
@@ -64,6 +64,8 @@ export default function Dashboard() {
     }).catch(() => {})
     api.get('/leaves/handover-to-me').then(r => setHandovers(r.data)).catch(() => {})
   }, [user])
+
+  const needsProfileUpdate = !isMgmt && (!user?.phone || !user?.address)
 
   const cards = isMgmt
     ? stats
@@ -154,6 +156,21 @@ export default function Dashboard() {
           </button>
         )}
       </div>
+
+      {needsProfileUpdate && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+          <AlertCircle size={16} className="text-amber-600 shrink-0" />
+          <p className="text-xs text-amber-700 flex-1">
+            Your profile is incomplete. Please update your phone number and address.
+          </p>
+          <button
+            onClick={() => navigate('/profile')}
+            className="text-xs font-medium text-amber-700 underline hover:no-underline shrink-0"
+          >
+            Update Profile
+          </button>
+        </div>
+      )}
 
       {cards.length > 0 && (
         <div className={`grid grid-cols-2 gap-3 mb-6 ${isMgmt ? 'md:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4'}`}>

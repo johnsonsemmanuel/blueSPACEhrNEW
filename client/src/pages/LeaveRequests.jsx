@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, CheckCircle, XCircle, Download, Trash2 } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Download, Trash2, Eye } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -12,6 +12,7 @@ export default function LeaveRequests() {
   const [leaves, setLeaves] = useState([])
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState(null)
+  const [viewOnly, setViewOnly] = useState(null)
   const [remark, setRemark] = useState('')
 
   useEffect(() => {
@@ -113,6 +114,7 @@ export default function LeaveRequests() {
                     <th className="px-5 py-4">Dates</th>
                     <th className="px-5 py-4">Days</th>
                     <th className="px-5 py-4">Handover</th>
+                    <th className="px-5 py-4">Description</th>
                     <th className="px-5 py-4">Status</th>
                     <th className="px-5 py-4">Actions</th>
                   </tr>
@@ -135,9 +137,19 @@ export default function LeaveRequests() {
                       </td>
                       <td className="px-5 py-4">{leave.total_leave_days}</td>
                       <td className="px-5 py-4 text-gray-500 text-xs">{leave.handover_name || '–'}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs max-w-[180px] truncate">
+                        {leave.leave_reason || '–'}
+                      </td>
                       <td className="px-5 py-4">{statusBadge(leave.status)}</td>
                       <td className="px-5 py-4">
                         <div className="flex gap-1.5">
+                          <button
+                            onClick={() => setViewOnly(leave)}
+                            className="p-1.5 rounded bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye size={15} />
+                          </button>
                           {leave.status === 'Pending' ? (
                             <>
                               <button
@@ -176,6 +188,7 @@ export default function LeaveRequests() {
         </Card>
       </motion.div>
 
+      {/* Approve/Reject Modal */}
       <Modal open={!!selected} onClose={() => setSelected(null)} title={`Review: ${selected?.employee_name}'s ${selected?.leave_type_name}`} size="lg">
         {selected && (
           <div className="space-y-4">
@@ -237,6 +250,78 @@ export default function LeaveRequests() {
                 Reject
               </Button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* View Details Modal */}
+      <Modal open={!!viewOnly} onClose={() => setViewOnly(null)} title={`${viewOnly?.employee_name}'s ${viewOnly?.leave_type_name}`} size="lg">
+        {viewOnly && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+              <div className="h-10 w-10 rounded-full bg-deep-100 flex items-center justify-center text-sm font-bold text-deep-600">
+                {viewOnly.employee_name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-deep-600">{viewOnly.employee_name}</p>
+                <p className="text-xs text-gray-400">{viewOnly.employee_code} · {viewOnly.department_name || 'No department'}</p>
+              </div>
+              <div className="ml-auto">{statusBadge(viewOnly.status)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-gray-500">Leave Type</p>
+                <p className="font-medium text-deep-600">{viewOnly.leave_type_name}{viewOnly.is_half_day ? ' (Half Day)' : ''}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Total Days</p>
+                <p className="font-medium text-deep-600">{viewOnly.total_leave_days}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Start Date</p>
+                <p className="font-medium text-deep-600">{viewOnly.start_date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">End Date</p>
+                <p className="font-medium text-deep-600">{viewOnly.end_date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Handover To</p>
+                <p className="font-medium text-deep-600">{viewOnly.handover_name || 'None'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Applied On</p>
+                <p className="font-medium text-deep-600">{viewOnly.applied_on ? new Date(viewOnly.applied_on).toLocaleDateString('en-GB') : '–'}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Reason / Description</p>
+              <p className="text-sm text-deep-600 bg-gray-50 rounded-md p-3">{viewOnly.leave_reason || 'No reason provided'}</p>
+            </div>
+            {viewOnly.contact_during_leave && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Contact During Leave</p>
+                <p className="text-sm text-deep-600">{viewOnly.contact_during_leave}</p>
+              </div>
+            )}
+            {viewOnly.leave_address && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Leave Address</p>
+                <p className="text-sm text-deep-600">{viewOnly.leave_address}</p>
+              </div>
+            )}
+            {viewOnly.handover_notes && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Handover Notes</p>
+                <p className="text-sm text-deep-600 bg-gray-50 rounded-md p-3">{viewOnly.handover_notes}</p>
+              </div>
+            )}
+            {viewOnly.remark && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Admin Remark</p>
+                <p className="text-sm text-deep-600 bg-gray-50 rounded-md p-3">{viewOnly.remark}</p>
+              </div>
+            )}
           </div>
         )}
       </Modal>

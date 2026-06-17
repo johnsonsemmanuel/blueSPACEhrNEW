@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, Menu, X, Settings, CalendarDays, ChevronDown, User } from 'lucide-react'
+import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, Menu, X, Settings, CalendarDays, ChevronDown, User, Building2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = {
@@ -15,6 +15,7 @@ const navItems = {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/leave-requests', icon: FileText, label: 'Leave Requests' },
     { to: '/employees', icon: Users, label: 'Employees' },
+    { to: '/departments', icon: Building2, label: 'Departments' },
     { to: '/leave-types', icon: Settings, label: 'Leave Types' },
     { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
     { to: '/profile', icon: User, label: 'Profile' },
@@ -29,7 +30,7 @@ export default function Sidebar({ open, onClose }) {
   return (
     <>
       {open && <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={onClose} />}
-      <aside className={`fixed top-0 left-0 z-50 min-h-screen w-60 bg-deep-600 text-white transform transition-transform duration-200 lg:translate-x-0 lg:relative lg:z-auto flex flex-col self-stretch ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 left-0 z-50 h-screen w-60 bg-deep-600 text-white transform transition-transform duration-200 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between h-14 px-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5">
             <img src="/logo-light.png" alt="BlueSPACE" className="h-7 w-auto" />

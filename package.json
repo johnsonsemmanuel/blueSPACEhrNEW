@@ -1,0 +1,12 @@
+{
+  "name": "bluespace-leave-management",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start:server": "cd server && npm start"
+  }
+}
