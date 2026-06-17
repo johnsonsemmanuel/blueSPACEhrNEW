@@ -298,7 +298,7 @@ export default function MyLeaves() {
               value={form.leave_reason}
               onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
               rows={3}
-              className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+              className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
             />
           </div>
 
@@ -319,7 +319,7 @@ export default function MyLeaves() {
                 value={form.contact_during_leave}
                 onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
                 placeholder="Phone during leave"
-                className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
               />
             </div>
             <div className="md:col-span-2">

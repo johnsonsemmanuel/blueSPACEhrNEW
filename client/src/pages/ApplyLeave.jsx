@@ -181,7 +181,7 @@ export default function ApplyLeave() {
                     value={form.leave_address}
                     onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
                     rows={2}
-                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
                     placeholder="Where will you be during your leave?"
                   />
                 </div>
@@ -208,7 +208,7 @@ export default function ApplyLeave() {
                     value={form.handover_notes}
                     onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
                     rows={2}
-                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
                     placeholder="Brief notes for the person covering you..."
                   />
                 </div>
@@ -223,7 +223,7 @@ export default function ApplyLeave() {
                 value={form.leave_reason}
                 onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
                 rows={4}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
                 placeholder="Briefly describe the reason for your leave..."
               />
             </div>

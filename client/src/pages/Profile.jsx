@@ -111,7 +111,7 @@ export default function Profile() {
                 onChange={e => setProfile({ ...profile, address: e.target.value })}
                 placeholder="Your address"
                 rows={2}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-deep-600/20 focus:border-deep-600 resize-none"
+                className="w-full px-3 py-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-deep-600/20 focus:border-deep-600 resize-none"
               />
             </div>
             <Button type="submit" disabled={saving}>
