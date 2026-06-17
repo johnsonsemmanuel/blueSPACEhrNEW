@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/database');
@@ -32,6 +33,12 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(clientDist));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientDist, 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`BlueSPACE Leave API running on port ${PORT}`);
+  console.log(`BlueSPACE Leave Management running on port ${PORT}`);
 });
