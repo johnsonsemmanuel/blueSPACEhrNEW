@@ -150,19 +150,22 @@ export default function Employees() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-deep-600 truncate">{emp.name}</p>
                   <p className="text-xs text-gray-400">{emp.designation_name || 'No designation'}</p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                    <span className="inline-flex items-center gap-1">
-                      <Mail size={11} /> {emp.email}
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 min-w-0">
+                    <span className="inline-flex items-center gap-1 min-w-0">
+                      <Mail size={11} className="shrink-0" />
+                      <span className="truncate">{emp.email}</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-xs text-gray-500">
                     {emp.phone && (
                       <span className="inline-flex items-center gap-1">
-                        <Phone size={11} /> {emp.phone}
+                        <Phone size={11} className="shrink-0" />
+                        <span>{emp.phone}</span>
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1">
-                      <Calendar size={11} /> {emp.employee_id}
+                      <Calendar size={11} className="shrink-0" />
+                      {emp.employee_id}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -188,10 +191,10 @@ export default function Employees() {
         {selected && (
           <div className="space-y-5">
             <div className="flex items-center gap-4">
-              <Avatar src={selected.avatar} name={selected.name} size="h-16 w-16" textSize="text-xl" />
-              <div className="flex-1">
-                <p className="text-lg font-bold text-deep-600">{selected.name}</p>
-                <p className="text-sm text-gray-500">{selected.designation_name || 'No designation'}</p>
+              <Avatar src={selected.avatar} name={selected.name} size="h-14 w-14 sm:h-16 sm:w-16" textSize="text-lg sm:text-xl" />
+              <div className="min-w-0 flex-1">
+                <p className="text-base sm:text-lg font-bold text-deep-600 truncate">{selected.name}</p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{selected.designation_name || 'No designation'}</p>
                 <p className="text-xs text-gray-400">{selected.employee_id}</p>
               </div>
             </div>
@@ -227,51 +230,51 @@ export default function Employees() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Mail size={14} className="text-gray-400" />
-                  <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Mail size={14} className="text-gray-400 shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-500">Email</p>
-                    <p className="font-medium text-deep-600">{selected.email}</p>
+                    <p className="font-medium text-deep-600 truncate">{selected.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-gray-400" />
+                  <Phone size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Phone</p>
                     <p className="font-medium text-deep-600">{selected.phone || '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-gray-400" />
+                  <Calendar size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Date of Birth</p>
                     <p className="font-medium text-deep-600">{selected.dob ? new Date(selected.dob).toLocaleDateString('en-GB') : '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <User size={14} className="text-gray-400" />
+                  <User size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Gender</p>
                     <p className="font-medium text-deep-600">{selected.gender || '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Briefcase size={14} className="text-gray-400" />
-                  <div>
+                  <Briefcase size={14} className="text-gray-400 shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-500">Department</p>
-                    <p className="font-medium text-deep-600">{selected.department_name || '–'}</p>
+                    <p className="font-medium text-deep-600 truncate">{selected.department_name || '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Building2 size={14} className="text-gray-400" />
+                  <Building2 size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Branch</p>
                     <p className="font-medium text-deep-600">{selected.branch_name || '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-gray-400" />
+                  <Calendar size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Date Joined</p>
                     <p className="font-medium text-deep-600">{selected.company_doj ? new Date(selected.company_doj).toLocaleDateString('en-GB') : '–'}</p>
@@ -285,10 +288,10 @@ export default function Employees() {
 
             {!editing && (
               <div className="flex items-start gap-2">
-                <MapPin size={14} className="text-gray-400 mt-0.5" />
-                <div>
+                <MapPin size={14} className="text-gray-400 mt-0.5 shrink-0" />
+                <div className="min-w-0">
                   <p className="text-xs text-gray-500">Address</p>
-                  <p className="text-sm font-medium text-deep-600">{selected.address || '–'}</p>
+                  <p className="text-sm font-medium text-deep-600 break-words">{selected.address || '–'}</p>
                 </div>
               </div>
             )}
