@@ -167,9 +167,7 @@ export default function LeaveRequests() {
                                 <XCircle size={15} />
                               </button>
                             </>
-                          ) : (
-                            <span className="text-xs text-gray-400">{leave.status}</span>
-                          )}
+                          ) : null}
                           <button
                             onClick={() => handleDelete(leave.id)}
                             className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
