@@ -228,12 +228,12 @@ export default function ApplyLeave() {
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
-              <Button type="submit" className="min-w-[140px]">
+            <div className="flex items-stretch gap-3 pt-2">
+              <Button type="submit" className="flex-1">
                 <Eye size={14} />
                 Preview & Submit
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/my-leaves')}>
+              <Button type="button" variant="outline" onClick={() => navigate('/my-leaves')} className="flex-1">
                 Cancel
               </Button>
             </div>
