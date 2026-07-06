@@ -248,11 +248,12 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
     `SELECT u.id, u.email, u.name FROM users u WHERE LOWER(u.type) IN ('management','manager','company')`
   );
   for (const m of managers) {
+    console.log(`[notify] leave ${leaveId} -> admin ${m.name} <${m.email}> (type=${m.type || 'n/a'})`);
     await pool.query(
       'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
       [m.id, 'leave_submitted', JSON.stringify({ leaveId, employeeName, leaveType: leaveTitle })]
     );
-    await sendLeaveSubmittedNotification({
+    const sent = await sendLeaveSubmittedNotification({
       toEmail: m.email,
       toName: m.name,
       fromName: employeeName,
@@ -261,6 +262,7 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
       endDate: end_date,
       reason: leave_reason,
     });
+    console.log(`[notify] admin email to ${m.email}: ${sent ? 'SENT' : 'SKIPPED/FAILED'}`);
   }
 
   if (handover_to) {
@@ -277,7 +279,7 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
         'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
         [hu.user_id, 'leave_handover', JSON.stringify({ leaveId, employeeName, leaveType: leaveTitle, startDate: start_date, endDate: end_date })]
       );
-      await sendHandoverNotification({
+      const sentHo = await sendHandoverNotification({
         toEmail: hu.email,
         toName: hu.name,
         fromName: employeeName,
@@ -286,6 +288,7 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
         endDate: end_date,
         notes: handover_notes,
       });
+      console.log(`[notify] handover email to ${hu.email}: ${sentHo ? 'SENT' : 'SKIPPED/FAILED'}`);
     }
   }
 }
@@ -482,7 +485,7 @@ router.put('/:id/status', authenticate, authorize('Management'), async (req, res
         'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
         [lv.user_id, `leave_${status.toLowerCase()}`, JSON.stringify({ leaveId: req.params.id, leaveType: lv.leave_type_name, status, reviewer: req.user.name })]
       );
-      await sendLeaveStatusNotification({
+      const sentStatus = await sendLeaveStatusNotification({
         toEmail: lv.employee_email,
         toName: lv.employee_email_name,
         leaveType: lv.leave_type_name,
@@ -492,6 +495,7 @@ router.put('/:id/status', authenticate, authorize('Management'), async (req, res
         endDate: lv.end_date,
         remark,
       });
+      console.log(`[notify] status (${status}) email to ${lv.employee_email}: ${sentStatus ? 'SENT' : 'SKIPPED/FAILED'}`);
     }
 
     res.json({ message: `Leave ${status.toLowerCase()}` });
