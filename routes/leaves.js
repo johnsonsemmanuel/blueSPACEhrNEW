@@ -243,6 +243,53 @@ router.get('/notifications', authenticate, async (req, res) => {
   }
 });
 
+async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_date, end_date, leave_reason, handover_to, handover_notes }) {
+  const [managers] = await pool.query(
+    `SELECT u.id, u.email, u.name FROM users u WHERE u.type IN ('Management','Manager')`
+  );
+  for (const m of managers) {
+    await pool.query(
+      'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
+      [m.id, 'leave_submitted', JSON.stringify({ leaveId, employeeName, leaveType: leaveTitle })]
+    );
+    await sendLeaveSubmittedNotification({
+      toEmail: m.email,
+      toName: m.name,
+      fromName: employeeName,
+      leaveType: leaveTitle,
+      startDate: start_date,
+      endDate: end_date,
+      reason: leave_reason,
+    });
+  }
+
+  if (handover_to) {
+    const [handoverUsers] = await pool.query(
+      `SELECT u.id AS user_id, u.name, u.email
+       FROM employees he
+       JOIN users u ON he.user_id = u.id
+       WHERE he.id = ?`,
+      [handover_to]
+    );
+    if (handoverUsers.length > 0) {
+      const hu = handoverUsers[0];
+      await pool.query(
+        'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
+        [hu.user_id, 'leave_handover', JSON.stringify({ leaveId, employeeName, leaveType: leaveTitle, startDate: start_date, endDate: end_date })]
+      );
+      await sendHandoverNotification({
+        toEmail: hu.email,
+        toName: hu.name,
+        fromName: employeeName,
+        leaveType: leaveTitle,
+        startDate: start_date,
+        endDate: end_date,
+        notes: handover_notes,
+      });
+    }
+  }
+}
+
 function getDateRange(start, end) {
   const dates = [];
   const current = new Date(start);
@@ -316,56 +363,24 @@ router.post('/', authenticate, async (req, res) => {
       [req.user.employeeId, leave_type_id, start_date, end_date, String(diffDays), leave_reason || '', handover_to || null, handover_notes || '', contact_during_leave || '', leave_address || '', is_half_day ? 1 : 0, req.user.id]
     );
 
-    try {
-      const [managers] = await pool.query(
-        `SELECT u.id, u.email, u.name FROM users u WHERE u.type IN ('Management','Manager')`
-      );
-      for (const m of managers) {
-        await pool.query(
-          'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
-          [m.id, 'leave_submitted', JSON.stringify({ leaveId: result.insertId, employeeName: req.user.name, leaveType: leaveType[0].title })]
-        );
-        await sendLeaveSubmittedNotification({
-          toEmail: m.email,
-          toName: m.name,
-          fromName: req.user.name,
-          leaveType: leaveType[0].title,
-          startDate: start_date,
-          endDate: end_date,
-          reason: leave_reason,
-        });
-      }
+    const leaveId = result.insertId;
+    const employeeName = req.user.name;
+    const leaveTitle = leaveType[0].title;
 
-      if (handover_to) {
-        const [handoverUsers] = await pool.query(
-          `SELECT u.id AS user_id, u.name, u.email
-           FROM employees he
-           JOIN users u ON he.user_id = u.id
-           WHERE he.id = ?`,
-          [handover_to]
-        );
-        if (handoverUsers.length > 0) {
-          const hu = handoverUsers[0];
-          await pool.query(
-            'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
-            [hu.user_id, 'leave_handover', JSON.stringify({ leaveId: result.insertId, employeeName: req.user.name, leaveType: leaveType[0].title, startDate: start_date, endDate: end_date })]
-          );
-          await sendHandoverNotification({
-            toEmail: hu.email,
-            toName: hu.name,
-            fromName: req.user.name,
-            leaveType: leaveType[0].title,
-            startDate: start_date,
-            endDate: end_date,
-            notes: handover_notes,
-          });
-        }
-      }
-    } catch (notifyErr) {
+    res.status(201).json({ id: leaveId, message: 'Leave request submitted' });
+
+    notifyLeaveSubmitted({
+      leaveId,
+      employeeName,
+      leaveTitle,
+      start_date,
+      end_date,
+      leave_reason,
+      handover_to,
+      handover_notes,
+    }).catch((notifyErr) => {
       console.error('Leave notification error (non-fatal):', notifyErr);
-    }
-
-    res.status(201).json({ id: result.insertId, message: 'Leave request submitted' });
+    });
   } catch (err) {
     console.error('Leave create error:', err);
     res.status(500).json({ error: 'Server error', detail: err.message });

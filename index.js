@@ -7,6 +7,7 @@ const pool = require('./config/database');
 const authRoutes = require('./routes/auth');
 const leaveRoutes = require('./routes/leaves');
 const leaveTypeRoutes = require('./routes/leaveTypes');
+const debugRoutes = require('./routes/debug');
 const employeeRoutes = require('./routes/employees');
 const departmentRoutes = require('./routes/departments');
 
@@ -28,6 +29,7 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/leave-types', leaveTypeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/debug', debugRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {
