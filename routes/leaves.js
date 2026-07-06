@@ -243,9 +243,18 @@ router.get('/notifications', authenticate, async (req, res) => {
   }
 });
 
-async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_date, end_date, leave_reason, handover_to, handover_notes }) {
+async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_date, end_date, leave_reason, handover_to, handover_notes, totalDays }) {
+  let handoverName = null;
+  if (handover_to) {
+    const [huRows] = await pool.query(
+      `SELECT u.name FROM employees he JOIN users u ON he.user_id = u.id WHERE he.id = ?`,
+      [handover_to]
+    );
+    if (huRows.length > 0) handoverName = huRows[0].name;
+  }
+
   const [managers] = await pool.query(
-    `SELECT u.id, u.email, u.name FROM users u WHERE LOWER(u.type) IN ('management','manager','company')`
+    `SELECT u.id, u.email, u.name, u.type FROM users u WHERE LOWER(u.type) IN ('management','manager','company')`
   );
   for (const m of managers) {
     console.log(`[notify] leave ${leaveId} -> admin ${m.name} <${m.email}> (type=${m.type || 'n/a'})`);
@@ -261,6 +270,9 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
       startDate: start_date,
       endDate: end_date,
       reason: leave_reason,
+      leaveId,
+      totalDays,
+      handoverName,
     });
     console.log(`[notify] admin email to ${m.email}: ${sent ? 'SENT' : 'SKIPPED/FAILED'}`);
   }
@@ -287,6 +299,7 @@ async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_d
         startDate: start_date,
         endDate: end_date,
         notes: handover_notes,
+        leaveId,
       });
       console.log(`[notify] handover email to ${hu.email}: ${sentHo ? 'SENT' : 'SKIPPED/FAILED'}`);
     }
@@ -381,6 +394,7 @@ router.post('/', authenticate, async (req, res) => {
       leave_reason,
       handover_to,
       handover_notes,
+      totalDays: diffDays,
     }).catch((notifyErr) => {
       console.error('Leave notification error (non-fatal):', notifyErr);
     });
@@ -493,6 +507,9 @@ router.put('/:id/status', authenticate, authorize('Management'), async (req, res
         reviewer: req.user.name,
         startDate: lv.start_date,
         endDate: lv.end_date,
+        remark,
+        leaveId: req.params.id,
+        totalDays: lv.total_leave_days,
         remark,
       });
       console.log(`[notify] status (${status}) email to ${lv.employee_email}: ${sentStatus ? 'SENT' : 'SKIPPED/FAILED'}`);
