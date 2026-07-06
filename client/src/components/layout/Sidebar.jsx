@@ -22,7 +22,7 @@ const navItems = {
   ],
 }
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onOpen, onClose }) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const items = navItems[user?.type] || navItems.Staff
@@ -101,7 +101,7 @@ export default function Sidebar({ open, onClose }) {
         })}
 
         <button
-          onClick={onClose}
+          onClick={onOpen}
           className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-gray-400"
         >
           <MoreHorizontal size={20} />

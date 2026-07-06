@@ -61,7 +61,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={sidebarOpen} onOpen={() => setSidebarOpen(true)} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-60">
         <header className="h-14 bg-white border-b border-gray-100 flex items-center px-4 lg:px-6 sticky top-0 z-30">
