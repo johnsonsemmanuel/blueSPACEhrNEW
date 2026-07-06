@@ -134,25 +134,25 @@ export default function Dashboard() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <GreetIcon size={16} className="text-amber-500" />
-            <h1 className="text-lg font-bold text-deep-600">
+            <GreetIcon size={16} className="text-amber-500 shrink-0" />
+            <h1 className="text-base sm:text-lg font-bold text-deep-600 truncate">
               {greeting.text}, {user?.name?.split(' ')[0]}
             </h1>
           </div>
-          <p className="text-xs text-gray-500 ml-[22px]">
+          <p className="text-xs text-gray-500 ml-[22px] truncate">
             {isMgmt ? 'Management Dashboard' : 'My Dashboard'}
           </p>
         </div>
         {!isMgmt && (
           <button
             onClick={() => navigate('/apply')}
-            className="h-9 px-4 bg-deep-600 text-white rounded-md text-sm font-medium hover:bg-deep-700 transition-colors flex items-center gap-2"
+            className="h-9 px-3 sm:px-4 bg-deep-600 text-white rounded-md text-xs sm:text-sm font-medium hover:bg-deep-700 transition-colors flex items-center gap-1.5 sm:gap-2 shrink-0"
           >
-            <CalendarPlus size={15} />
-            Apply Leave
+            <CalendarPlus size={15} className="shrink-0" />
+            <span className="whitespace-nowrap">Apply Leave</span>
           </button>
         )}
       </div>

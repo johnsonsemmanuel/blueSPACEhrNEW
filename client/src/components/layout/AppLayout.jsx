@@ -65,6 +65,9 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-60">
         <header className="h-14 bg-white border-b border-gray-100 flex items-center px-4 lg:px-6 sticky top-0 z-30">
+          <div className="flex items-center lg:hidden mr-3">
+            <img src="/logo-light.png" alt="BlueSPACE" className="h-6 w-auto" />
+          </div>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
             <div className="relative" ref={notifRef}>
