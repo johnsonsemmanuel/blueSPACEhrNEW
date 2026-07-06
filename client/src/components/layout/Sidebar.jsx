@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2 } from 'lucide-react'
+import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2, MoreHorizontal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = {
@@ -13,7 +13,7 @@ const navItems = {
   ],
   Management: [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/leave-requests', icon: FileText, label: 'Leave Requests' },
+    { to: '/leave-requests', icon: FileText, label: 'Requests' },
     { to: '/employees', icon: Users, label: 'Employees' },
     { to: '/departments', icon: Building2, label: 'Departments' },
     { to: '/leave-types', icon: Settings, label: 'Leave Types' },
@@ -26,6 +26,9 @@ export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const items = navItems[user?.type] || navItems.Staff
+
+  const primary = items.slice(0, 4)
+  const overflow = items.slice(4)
 
   return (
     <>
@@ -64,41 +67,77 @@ export default function Sidebar({ open, onClose }) {
         </div>
       </aside>
 
-      {/* Mobile bottom sheet */}
+      {/* Mobile bottom navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 flex items-stretch shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
+        {primary.map((item) => {
+          const active = location.pathname === item.to
+          const isApply = item.to === '/apply'
+          if (isApply) {
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-deep-600"
+              >
+                <span className="h-9 w-9 -mt-5 rounded-full bg-deep-600 text-white flex items-center justify-center shadow-md">
+                  <item.icon size={18} />
+                </span>
+                <span className="text-[10px] font-semibold leading-none">{item.label.replace('Apply ', '')}</span>
+              </NavLink>
+            )
+          }
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${
+                active ? 'text-deep-600' : 'text-gray-400'
+              }`}
+            >
+              <item.icon size={20} />
+              {item.label.length > 10 ? item.label.split(' ')[0] : item.label}
+            </NavLink>
+          )
+        })}
+
+        <button
+          onClick={onClose}
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-gray-400"
+        >
+          <MoreHorizontal size={20} />
+          More
+        </button>
+      </nav>
+
+      {/* Mobile "More" sheet */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={onClose} />
           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col animate-sheet-up">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <img src="/logo-light.png" alt="BlueSPACE" className="h-6 w-auto" />
-                <span className="text-sm font-bold text-deep-600">Menu</span>
-              </div>
+              <span className="text-sm font-bold text-deep-600">More</span>
               <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-deep-600 rounded-md">
                 <X size={20} />
               </button>
             </div>
 
             <nav className="p-3 space-y-1 overflow-y-auto">
-              {items.map((item) => {
+              {overflow.length === 0 && (
+                <p className="px-4 py-3 text-xs text-gray-400">No additional items</p>
+              )}
+              {overflow.map((item) => {
                 const active = location.pathname === item.to
-                const isApply = item.to === '/apply'
                 return (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                      isApply
-                        ? 'bg-deep-600 text-white'
-                        : active
-                        ? 'bg-deep-50 text-deep-700'
-                        : 'text-gray-600 hover:bg-gray-50'
+                      active ? 'bg-deep-50 text-deep-700' : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <item.icon size={18} />
                     {item.label}
-                    {isApply && <span className="ml-auto text-[10px] uppercase tracking-wider opacity-80">Tap to apply</span>}
                   </NavLink>
                 )
               })}

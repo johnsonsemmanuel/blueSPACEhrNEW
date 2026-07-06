@@ -1,6 +1,6 @@
 import { Outlet, Navigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import { Menu, Bell } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import Sidebar from './Sidebar'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
@@ -65,9 +65,6 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-60">
         <header className="h-14 bg-white border-b border-gray-100 flex items-center px-4 lg:px-6 sticky top-0 z-30">
-          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-gray-500 hover:text-deep-600 lg:hidden mr-3">
-            <Menu size={20} />
-          </button>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
             <div className="relative" ref={notifRef}>
@@ -132,7 +129,7 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-auto pb-24 lg:pb-6">
           <Outlet />
         </main>
       </div>
