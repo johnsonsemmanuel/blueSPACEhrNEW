@@ -26,12 +26,20 @@ router.post('/login', async (req, res) => {
     );
 
     if (users.length === 0) {
+      console.warn('[login] No active user found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const user = users[0];
-    const valid = await bcrypt.compare(password, user.password);
+    const storedHash = (user.password || '').replace(/^\$2y\$/, '$2a$');
+    let valid = false;
+    try {
+      valid = await bcrypt.compare(password, storedHash);
+    } catch (compareErr) {
+      console.error('[login] bcrypt compare failed for user', user.id, compareErr);
+    }
     if (!valid) {
+      console.warn('[login] Password mismatch for user:', user.id, user.email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -181,7 +189,7 @@ router.put('/password', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const valid = await bcrypt.compare(current_password, users[0].password);
+    const valid = await bcrypt.compare(current_password, (users[0].password || '').replace(/^\$2y\$/, '$2a$'));
     if (!valid) {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
