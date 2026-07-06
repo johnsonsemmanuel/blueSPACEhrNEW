@@ -245,7 +245,7 @@ router.get('/notifications', authenticate, async (req, res) => {
 
 async function notifyLeaveSubmitted({ leaveId, employeeName, leaveTitle, start_date, end_date, leave_reason, handover_to, handover_notes }) {
   const [managers] = await pool.query(
-    `SELECT u.id, u.email, u.name FROM users u WHERE u.type IN ('Management','Manager')`
+    `SELECT u.id, u.email, u.name FROM users u WHERE LOWER(u.type) IN ('management','manager','company')`
   );
   for (const m of managers) {
     await pool.query(
@@ -482,7 +482,7 @@ router.put('/:id/status', authenticate, authorize('Management'), async (req, res
         'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
         [lv.user_id, `leave_${status.toLowerCase()}`, JSON.stringify({ leaveId: req.params.id, leaveType: lv.leave_type_name, status, reviewer: req.user.name })]
       );
-      sendLeaveStatusNotification({
+      await sendLeaveStatusNotification({
         toEmail: lv.employee_email,
         toName: lv.employee_email_name,
         leaveType: lv.leave_type_name,

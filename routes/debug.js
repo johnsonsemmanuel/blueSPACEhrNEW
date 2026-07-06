@@ -1,8 +1,28 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authenticate } = require('../middleware/auth');
+const { sendEmail } = require('../services/email');
 
 const router = express.Router();
+
+// TEMPORARY debug route: send a test email to verify SMTP is configured and working.
+router.post('/smtp-test', authenticate, async (req, res) => {
+  const to = req.body.to || req.user.email;
+  try {
+    const ok = await sendEmail({
+      to,
+      subject: 'BlueSPACE SMTP test',
+      html: '<p>This is a test email from the BlueSPACE HR System to verify SMTP sending works.</p>',
+    });
+    if (ok) {
+      res.json({ ok: true, message: `Test email sent to ${to}` });
+    } else {
+      res.status(500).json({ ok: false, message: 'Email not sent. Check server logs — SMTP is likely not configured (SMTP_HOST/USER/PASS missing) or send failed.' });
+    }
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // TEMPORARY debug route: replicate POST /leaves step by step and report the failing step.
 router.post('/leave-create', authenticate, async (req, res) => {
