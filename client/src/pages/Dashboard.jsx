@@ -149,7 +149,7 @@ export default function Dashboard() {
         {!isMgmt && (
           <button
             onClick={() => navigate('/apply')}
-            className="h-9 px-3 sm:px-4 bg-deep-600 text-white rounded-md text-xs sm:text-sm font-medium hover:bg-deep-700 transition-colors flex items-center gap-1.5 sm:gap-2 shrink-0"
+            className="h-9 px-3 sm:px-4 bg-brand-600 text-white rounded-md text-xs sm:text-sm font-medium hover:bg-brand-700 transition-colors flex items-center gap-1.5 sm:gap-2 shrink-0"
           >
             <CalendarPlus size={15} className="shrink-0" />
             <span className="whitespace-nowrap">Apply Leave</span>
