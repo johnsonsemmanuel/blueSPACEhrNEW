@@ -86,7 +86,7 @@ export default function Sidebar({ open, onOpen, onClose }) {
                 to={item.to}
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-deep-600"
               >
-                <span className="h-9 w-9 -mt-5 rounded-full bg-deep-600 text-white flex items-center justify-center shadow-md">
+                <span className="h-9 w-9 -mt-5 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-md">
                   <item.icon size={18} />
                 </span>
                 <span className="text-[10px] font-semibold leading-none">{item.label.replace('Apply ', '')}</span>
@@ -140,7 +140,7 @@ export default function Sidebar({ open, onOpen, onClose }) {
                     to={item.to}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                      active ? 'bg-deep-50 text-deep-700' : 'text-gray-600 hover:bg-gray-50'
+                      active ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <item.icon size={18} />

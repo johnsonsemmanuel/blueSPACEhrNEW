@@ -98,7 +98,7 @@ export default function ApplyLeave() {
         {balance.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {balance.map((b) => (
-              <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${form.leave_type_id == b.id ? 'bg-deep-50 border-deep-200 text-deep-700' : 'bg-white border-gray-100 text-gray-600'}`}>
+              <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${form.leave_type_id == b.id ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-gray-100 text-gray-600'}`}>
                 {b.title}: <strong>{b.remaining}</strong>/{b.total} days
               </div>
             ))}
@@ -107,17 +107,15 @@ export default function ApplyLeave() {
 
         <Card>
           <form onSubmit={handlePreview} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <Select
-                  label="Leave Type *"
-                  placeholder="Select leave type"
-                  value={form.leave_type_id}
-                  onChange={(e) => setForm({ ...form, leave_type_id: e.target.value })}
-                  options={leaveTypes.map((lt) => ({ value: lt.id, label: `${lt.title} (${lt.days} days)` }))}
-                />
-              </div>
+            <Select
+              label="Leave Type *"
+              placeholder="Select leave type"
+              value={form.leave_type_id}
+              onChange={(e) => setForm({ ...form, leave_type_id: e.target.value })}
+              options={leaveTypes.map((lt) => ({ value: lt.id, label: `${lt.title} (${lt.days} days)` }))}
+            />
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Start Date *"
                 type="date"
@@ -125,7 +123,6 @@ export default function ApplyLeave() {
                 onChange={(e) => setForm({ ...form, start_date: e.target.value })}
                 min={new Date().toISOString().split('T')[0]}
               />
-
               <Input
                 label="End Date *"
                 type="date"
@@ -133,102 +130,86 @@ export default function ApplyLeave() {
                 onChange={(e) => setForm({ ...form, end_date: e.target.value })}
                 min={form.start_date || new Date().toISOString().split('T')[0]}
               />
-
-              <div className="flex items-center gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="half-day"
-                    checked={form.is_half_day}
-                    onChange={(e) => setForm({ ...form, is_half_day: e.target.checked })}
-                    className="rounded border-gray-300 text-deep-600 focus:ring-deep-500"
-                  />
-                  <span className="text-xs font-medium text-deep-500">Half Day</span>
-                </label>
-              </div>
             </div>
 
-            {diffDays > 0 && (
-              <div className="bg-deep-50 rounded-md px-4 py-3 flex items-center gap-2">
-                <FileText size={14} className="text-deep-600" />
-                <span className="text-sm text-deep-600">
-                  Total: <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
+            <div className="flex items-center justify-between gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="half-day"
+                  checked={form.is_half_day}
+                  onChange={(e) => setForm({ ...form, is_half_day: e.target.checked })}
+                  className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
+                />
+                <span className="text-xs font-medium text-deep-500">Half Day</span>
+              </label>
+              {diffDays > 0 && (
+                <span className="text-xs text-deep-600 bg-brand-50 px-3 py-1.5 rounded-md">
+                  <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
                   {form.is_half_day && <span className="text-gray-500 ml-1">(half day)</span>}
                   {remainingBalance !== undefined && (
-                    <span className="text-gray-500 ml-2">· {remainingBalance} days remaining</span>
+                    <span className="text-gray-500 ml-2">· {remainingBalance} remaining</span>
                   )}
                 </span>
-              </div>
-            )}
-
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Phone size={13} /> Contact & Location During Leave
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Contact Phone (optional)"
-                  type="tel"
-                  value={form.contact_during_leave}
-                  onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
-                  placeholder="Number where you can be reached"
-                />
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
-                    Leave Address (optional)
-                  </label>
-                  <textarea
-                    value={form.leave_address}
-                    onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
-                    rows={2}
-                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
-                    placeholder="Where will you be during your leave?"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Users size={13} /> Handover
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  label="Handover To *"
-                  placeholder="Who is covering your work?"
-                  value={form.handover_to}
-                  onChange={(e) => setForm({ ...form, handover_to: e.target.value })}
-                  options={employees.filter(e => e.id !== null).map((emp) => ({ value: emp.id, label: `${emp.name} (${emp.employee_id})` }))}
-                />
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
-                    Handover Notes (optional)
-                  </label>
-                  <textarea
-                    value={form.handover_notes}
-                    onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
-                    rows={2}
-                    className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
-                    placeholder="Brief notes for the person covering you..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FileText size={13} /> Reason for Leave *
-              </p>
+            <div>
+              <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1.5">
+                Reason for Leave *
+              </label>
               <textarea
                 value={form.leave_reason}
                 onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
-                rows={4}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                rows={3}
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 resize-none"
                 placeholder="Briefly describe the reason for your leave..."
               />
             </div>
 
-            <div className="flex items-stretch gap-3 pt-2">
+            <div>
+              <Select
+                label="Handover To *"
+                placeholder="Who is covering your work?"
+                value={form.handover_to}
+                onChange={(e) => setForm({ ...form, handover_to: e.target.value })}
+                options={employees.filter(e => e.id !== null).map((emp) => ({ value: emp.id, label: `${emp.name} (${emp.employee_id})` }))}
+              />
+              <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1.5 mt-3">
+                Handover Notes (optional)
+              </label>
+              <textarea
+                value={form.handover_notes}
+                onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
+                rows={2}
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 resize-none"
+                placeholder="Brief notes for the person covering you..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Contact Phone (optional)"
+                type="tel"
+                value={form.contact_during_leave}
+                onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
+                placeholder="Number where you can be reached"
+              />
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1.5">
+                  Leave Address (optional)
+                </label>
+                <textarea
+                  value={form.leave_address}
+                  onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
+                  rows={2}
+                  className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 resize-none"
+                  placeholder="Where will you be during your leave?"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1">
                 <Eye size={14} />
                 Preview & Submit
@@ -244,7 +225,7 @@ export default function ApplyLeave() {
       {/* Preview Modal */}
       <Modal open={showPreview} onClose={() => setShowPreview(false)} title="Preview Leave Request" size="lg">
         <div className="space-y-4">
-          <div className="bg-deep-50 rounded-lg p-4 flex items-center gap-3">
+          <div className="bg-brand-50 rounded-lg p-4 flex items-center gap-3">
             <div className="h-12 w-12 rounded-full bg-deep-100 flex items-center justify-center text-lg font-bold text-deep-600">
               {selectedType?.title?.charAt(0) || '?'}
             </div>

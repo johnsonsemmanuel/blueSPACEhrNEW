@@ -67,7 +67,7 @@ export default function Profile() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-deep-600 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <User size={18} className="text-white" />
         </div>
         <div>
@@ -111,7 +111,7 @@ export default function Profile() {
                 onChange={e => setProfile({ ...profile, address: e.target.value })}
                 placeholder="Your address"
                 rows={2}
-                className="w-full px-3 py-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-deep-600/20 focus:border-deep-600 resize-none"
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 resize-none"
               />
             </div>
             <Button type="submit" disabled={saving}>

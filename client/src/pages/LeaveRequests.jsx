@@ -89,7 +89,7 @@ export default function LeaveRequests() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filter === f ? 'bg-deep-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                filter === f ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {f}
@@ -234,7 +234,7 @@ export default function LeaveRequests() {
                 value={remark}
                 onChange={(e) => setRemark(e.target.value)}
                 rows={2}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
                 placeholder="Add a remark..."
               />
             </div>

@@ -108,7 +108,7 @@ export default function MyLeaves() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filter === f ? 'bg-deep-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                filter === f ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {f}
@@ -283,7 +283,7 @@ export default function MyLeaves() {
                   type="checkbox"
                   checked={form.is_half_day}
                   onChange={(e) => setForm({ ...form, is_half_day: e.target.checked })}
-                  className="rounded border-gray-300 text-deep-600 focus:ring-deep-500"
+                  className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
                 />
                 <span className="text-xs font-medium text-deep-500">Half Day</span>
               </label>
@@ -298,7 +298,7 @@ export default function MyLeaves() {
               value={form.leave_reason}
               onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
               rows={3}
-              className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+              className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
             />
           </div>
 
@@ -319,7 +319,7 @@ export default function MyLeaves() {
                 value={form.contact_during_leave}
                 onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
                 placeholder="Phone during leave"
-                className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
               />
             </div>
             <div className="md:col-span-2">
@@ -330,7 +330,7 @@ export default function MyLeaves() {
                 value={form.leave_address}
                 onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
                 rows={2}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
               />
             </div>
             <div className="md:col-span-2">
@@ -341,7 +341,7 @@ export default function MyLeaves() {
                 value={form.handover_notes}
                 onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
                 rows={2}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-500 focus-visible:ring-offset-1"
+                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
               />
             </div>
           </div>

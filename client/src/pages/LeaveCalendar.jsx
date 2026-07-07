@@ -86,13 +86,13 @@ export default function LeaveCalendar() {
               const dayLeaves = getLeavesForDay(day)
               const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear()
               return (
-                <div key={day} className={`bg-white min-h-[90px] p-1.5 ${isToday ? 'ring-2 ring-deep-500 ring-inset' : ''}`}>
+                <div key={day} className={`bg-white min-h-[90px] p-1.5 ${isToday ? 'ring-2 ring-brand-500 ring-inset' : ''}`}>
                   <span className={`text-xs font-medium ${isToday ? 'text-deep-600' : 'text-gray-600'}`}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-0.5">
                     {dayLeaves.slice(0, 2).map((l) => (
-                      <div key={l.id} className="px-1 py-0.5 rounded bg-deep-50 text-[10px] text-deep-700 font-medium truncate leading-tight">
+                      <div key={l.id} className="px-1 py-0.5 rounded bg-brand-50 text-[10px] text-brand-700 font-medium truncate leading-tight">
                         {l.title?.split(' ')[0]}
                       </div>
                     ))}

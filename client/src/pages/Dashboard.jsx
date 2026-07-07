@@ -70,7 +70,7 @@ export default function Dashboard() {
   const cards = isMgmt
     ? stats
       ? [
-          { icon: FileText, label: 'Total Requests', value: stats.total, color: 'bg-deep-600' },
+          { icon: FileText, label: 'Total Requests', value: stats.total, color: 'bg-brand-600' },
           { icon: Clock, label: 'Pending', value: stats.pending, color: 'bg-amber-500' },
           { icon: CheckCircle, label: 'Approved', value: stats.approved, color: 'bg-emerald-500' },
           { icon: XCircle, label: 'Rejected', value: stats.rejected, color: 'bg-red-500' },
@@ -80,7 +80,7 @@ export default function Dashboard() {
       : []
     : myStats
       ? [
-          { icon: FileText, label: 'My Requests', value: myStats.total, color: 'bg-deep-600' },
+          { icon: FileText, label: 'My Requests', value: myStats.total, color: 'bg-brand-600' },
           { icon: Clock, label: 'Pending', value: myStats.pending, color: 'bg-amber-500' },
           { icon: CalendarCheck, label: 'Approved', value: myStats.approved, color: 'bg-emerald-500' },
           { icon: XCircle, label: 'Rejected', value: myStats.rejected, color: 'bg-red-500' },
@@ -320,7 +320,7 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-deep-600 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                        <div className="h-full bg-brand-600 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
                       </div>
                     </div>
                   )
