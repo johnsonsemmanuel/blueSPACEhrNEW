@@ -291,14 +291,14 @@ export default function MyLeaves() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
+            <label className="form-label mb-1">
               Reason for Leave
             </label>
             <textarea
               value={form.leave_reason}
               onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
               rows={3}
-              className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+              className="form-input"
             />
           </div>
 
@@ -311,7 +311,7 @@ export default function MyLeaves() {
               options={employees.filter(e => e.id !== null).map((emp) => ({ value: emp.id, label: `${emp.name} (${emp.employee_id})` }))}
             />
             <div>
-              <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
+              <label className="form-label mb-1">
                 Contact Phone (optional)
               </label>
               <input
@@ -319,29 +319,29 @@ export default function MyLeaves() {
                 value={form.contact_during_leave}
                 onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
                 placeholder="Phone during leave"
-                className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                className="form-input"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
+              <label className="form-label mb-1">
                 Leave Address (optional)
               </label>
               <textarea
                 value={form.leave_address}
                 onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
                 rows={2}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                className="form-input"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-deep-500 uppercase tracking-wider mb-1">
+              <label className="form-label mb-1">
                 Handover Notes (optional)
               </label>
               <textarea
                 value={form.handover_notes}
                 onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
                 rows={2}
-                className="flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-deep-600 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                className="form-input"
               />
             </div>
           </div>
