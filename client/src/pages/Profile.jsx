@@ -141,7 +141,6 @@ export default function Profile() {
               onChange={e => setPassword({ ...password, confirm: e.target.value })}
               placeholder="Confirm new password"
             />
-            </div>
             <Button type="submit" disabled={changing}>
               <Lock size={14} />
               {changing ? 'Updating...' : 'Update Password'}
