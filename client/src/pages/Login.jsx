@@ -190,6 +190,7 @@ export default function Login() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <div className="mb-8 text-center lg:text-left">
+                  <img src="/logo-dark.png" alt="BlueSPACE" className="h-8 w-auto mx-auto lg:hidden mb-4" />
                   <h2 className="text-xl font-bold text-deep-600">Sign In</h2>
                   <p className="text-sm text-gray-500 mt-1">Access your leave management portal</p>
                 </div>
