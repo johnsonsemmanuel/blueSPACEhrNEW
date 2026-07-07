@@ -27,8 +27,15 @@ export default function Sidebar({ open, onOpen, onClose }) {
   const location = useLocation()
   const items = navItems[user?.type] || navItems.Staff
 
-  const primary = items.slice(0, 4)
-  const overflow = items.slice(4)
+  const mobileItems = (() => {
+    const apply = items.find((i) => i.to === '/apply')
+    if (!apply) return items
+    const rest = items.filter((i) => i.to !== '/apply')
+    const mid = Math.floor(rest.length / 2)
+    return [...rest.slice(0, mid), apply, ...rest.slice(mid)]
+  })()
+  const primary = mobileItems.slice(0, 4)
+  const overflow = mobileItems.slice(4)
 
   return (
     <>
