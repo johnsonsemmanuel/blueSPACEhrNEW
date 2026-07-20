@@ -9,6 +9,7 @@ const leaveRoutes = require('./routes/leaves');
 const leaveTypeRoutes = require('./routes/leaveTypes');
 const employeeRoutes = require('./routes/employees');
 const departmentRoutes = require('./routes/departments');
+const runMigrations = require('./migrations/run');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +47,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await runMigrations();
   console.log(`BlueSPACE Leave Management running on port ${PORT}`);
 });
