@@ -87,7 +87,7 @@ export default function Login() {
             transition={{ duration: 0.5 }}
           >
             <img src="/logo-light.png" alt="BlueSPACE" className="h-14 w-auto mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-white mb-3">BlueSPACE Africa</h1>
+             <h1 className="text-3xl font-bold text-white mb-3">Bluespace Financial Cloud</h1>
             <p className="text-blue-200 text-sm leading-relaxed">
               Leave Management System – streamline employee leave requests, approvals, and tracking across the organization.
             </p>
@@ -222,7 +222,7 @@ export default function Login() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@bluespaceafrica.com"
+                    placeholder="you@bluespacefinancialcloud.com"
                     required
                   />
                   <div>
@@ -266,7 +266,7 @@ export default function Login() {
                 </form>
 
                 <p className="text-center text-xs text-gray-400 mt-6">
-                  BlueSPACE Africa Leave Management &copy; {new Date().getFullYear()}
+                  Bluespace Financial Cloud &copy; {new Date().getFullYear()}
                 </p>
               </motion.div>
             )}

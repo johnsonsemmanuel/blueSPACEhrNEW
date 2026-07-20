@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Mail, Phone, Calendar, MapPin, User, Briefcase, Building2, ChevronRight, Shield, Edit3, Save, X } from 'lucide-react'
+import { Users, Mail, Phone, Calendar, MapPin, User, Briefcase, Building2, ChevronRight, Shield, Edit3, Save, X, Plus } from 'lucide-react'
 import api from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import Card from '../components/ui/Card'
@@ -37,6 +37,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState([])
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(false)
+  const [addModal, setAddModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({})
   const [departments, setDepartments] = useState([])
@@ -55,6 +56,31 @@ export default function Employees() {
     }
   }, [isMgmt])
 
+  const resetFormState = () => ({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    dob: '',
+    gender: '',
+    department_id: '',
+    branch_id: '',
+    designation_id: '',
+    company_doj: '',
+    employee_id: '',
+    is_active: 1,
+    next_of_kin_name: '',
+    next_of_kin_phone: '',
+    next_of_kin_relationship: '',
+  })
+
+  const openAdd = () => {
+    setForm(resetFormState())
+    setAddModal(true)
+    setSelected(null)
+    setEditing(false)
+  }
+
   const startEdit = () => {
     setForm({
       name: selected.name || '',
@@ -69,6 +95,9 @@ export default function Employees() {
       company_doj: selected.company_doj ? selected.company_doj.split('T')[0] : '',
       employee_id: selected.employee_id || '',
       is_active: selected.is_active,
+      next_of_kin_name: selected.next_of_kin_name || '',
+      next_of_kin_phone: selected.next_of_kin_phone || '',
+      next_of_kin_relationship: selected.next_of_kin_relationship || '',
     })
     setEditing(true)
   }
@@ -85,13 +114,22 @@ export default function Employees() {
     }
     setSaving(true)
     try {
-      const res = await api.put(`/employees/${selected.id}`, form)
-      setEmployees(prev => prev.map(e => e.id === selected.id ? res.data : e))
-      setSelected(res.data)
-      setEditing(false)
-      toast.success('Employee updated successfully')
+      let res
+      if (addModal) {
+        res = await api.post('/employees', form)
+        setEmployees(prev => [...prev, res.data])
+        toast.success('Employee added successfully')
+        setAddModal(false)
+      } else {
+        res = await api.put(`/employees/${selected.id}`, form)
+        setEmployees(prev => prev.map(e => e.id === selected.id ? res.data : e))
+        setSelected(res.data)
+        setEditing(false)
+        toast.success('Employee updated successfully')
+      }
+      setForm({})
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to update employee')
+      toast.error(err.response?.data?.error || 'Failed to save employee')
     } finally {
       setSaving(false)
     }
@@ -126,14 +164,22 @@ export default function Employees() {
   return (
     <div className="w-full">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
-            <Users size={18} className="text-deep-600" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
+              <Users size={18} className="text-deep-600" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-deep-600">Employees</h1>
+              <p className="text-xs text-gray-500">{employees.length} employees</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-deep-600">Employees</h1>
-            <p className="text-xs text-gray-500">{employees.length} employees</p>
-          </div>
+          {isMgmt && (
+            <Button onClick={openAdd}>
+              <Plus size={15} />
+              Add Employee
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -185,8 +231,61 @@ export default function Employees() {
         </div>
       </motion.div>
 
-      <Modal open={!!selected && !resetModal} onClose={() => { setSelected(null); setEditing(false) }} title={selected?.name || ''} size="lg">
-        {selected && (
+      <Modal open={addModal || (!!selected && !resetModal)} onClose={() => { setSelected(null); setEditing(false); setAddModal(false); }} title={addModal ? 'Add Employee' : (selected?.name || '')} size="lg">
+        {addModal ? (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input label="Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+              <Input label="Email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+              <Input label="Phone" type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+              <Input label="Employee ID" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} />
+              <Input label="Date of Birth" type="date" value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} />
+              <Select label="Gender" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
+                options={[{value:'',label:'Select gender'},{value:'Male',label:'Male'},{value:'Female',label:'Female'},{value:'Other',label:'Other'}]} />
+              <Select label="Department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
+                options={[{value:'',label:'Select department'},...departments.map(d => ({value:d.id,label:d.name}))]} />
+              <Select label="Branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
+                options={[{value:'',label:'Select branch'},...branches.map(b => ({value:b.id,label:b.name}))]} />
+              <Select label="Designation" value={form.designation_id} onChange={e => setForm({...form, designation_id: e.target.value})}
+                options={[{value:'',label:'Select designation'},...designations.map(d => ({value:d.id,label:d.name}))]} />
+              <Input label="Date Joined" type="date" value={form.company_doj} onChange={e => setForm({...form, company_doj: e.target.value})} />
+              <Select label="Status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
+                options={[{value:1,label:'Active'},{value:0,label:'Inactive'}]} />
+              <Input label="Password" type="text" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder="Set initial password" />
+              <div className="md:col-span-2">
+                <label className="form-label mb-1">Address</label>
+                <textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})}
+                  rows={2} className="form-input" placeholder="Employee address..." />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-deep-600 mb-3">Next of Kin</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input label="Full Name" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
+                <Input label="Phone" type="tel" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
+                <Select label="Relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
+                  options={[{value:'',label:'Select relationship'},{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 flex items-center justify-end gap-3">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2"><Save size={14} /> Create Employee</span>
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => { setAddModal(false); setForm({}) }}>
+                <X size={14} /> Cancel
+              </Button>
+            </div>
+          </div>
+        ) : selected && (
           <div className="space-y-5">
             <div className="flex items-center gap-4">
               <Avatar src={selected.avatar} name={selected.name} size="h-14 w-14 sm:h-16 sm:w-16" textSize="text-lg sm:text-xl" />
@@ -255,7 +354,7 @@ export default function Employees() {
                   <Briefcase size={14} className="text-gray-400 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-gray-500">Department</p>
-                    <p className="font-medium text-deep-600 truncate">{selected.department_name || '–'}</p>
+                    <p className="font-medium text-deep-600 truncate">{selected.designation_name || '–'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -284,6 +383,38 @@ export default function Employees() {
                 <div className="min-w-0">
                   <p className="text-xs text-gray-500">Address</p>
                   <p className="text-sm font-medium text-deep-600 break-words">{selected.address || '–'}</p>
+                </div>
+              </div>
+            )}
+
+            {!editing && (selected.next_of_kin_name || selected.next_of_kin_phone || selected.next_of_kin_relationship) && (
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Next of Kin</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Name</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_name || '–'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_phone || '–'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Relationship</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_relationship || '–'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {editing && (
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="text-sm font-semibold text-deep-600 mb-3">Next of Kin</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Input label="Full Name" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
+                  <Input label="Phone" type="tel" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
+                  <Select label="Relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
+                    options={[{value:'',label:'Select relationship'},{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
                 </div>
               </div>
             )}
