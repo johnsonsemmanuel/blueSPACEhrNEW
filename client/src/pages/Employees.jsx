@@ -235,37 +235,37 @@ export default function Employees() {
         {addModal ? (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-              <Input label="Email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-              <Input label="Phone" type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-              <Input label="Employee ID" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} />
+              <Input label="Name *" placeholder="e.g. John Doe" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+              <Input label="Email" type="email" placeholder="e.g. john@bluespaceafrica.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+              <Input label="Phone" type="tel" placeholder="e.g. +233240000000" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+              <Input label="Employee ID" placeholder="e.g. EMP-001" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} />
               <Input label="Date of Birth" type="date" value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} />
-              <Select label="Gender" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
-                options={[{value:'',label:'Select gender'},{value:'Male',label:'Male'},{value:'Female',label:'Female'},{value:'Other',label:'Other'}]} />
-              <Select label="Department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
-                options={[{value:'',label:'Select department'},...departments.map(d => ({value:d.id,label:d.name}))]} />
-              <Select label="Branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
-                options={[{value:'',label:'Select branch'},...branches.map(b => ({value:b.id,label:b.name}))]} />
-              <Select label="Designation" value={form.designation_id} onChange={e => setForm({...form, designation_id: e.target.value})}
-                options={[{value:'',label:'Select designation'},...designations.map(d => ({value:d.id,label:d.name}))]} />
+              <Select label="Gender" placeholder="Select gender" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
+                options={[{value:'Male',label:'Male'},{value:'Female',label:'Female'},{value:'Other',label:'Other'}]} />
+              <Select label="Department" placeholder="Select department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
+                options={departments.map(d => ({value:d.id,label:d.name}))} />
+              <Select label="Branch" placeholder="Select branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
+                options={branches.map(b => ({value:b.id,label:b.name}))} />
+              <Select label="Designation" placeholder="Select designation" value={form.designation_id} onChange={e => setForm({...form, designation_id: e.target.value})}
+                options={designations.map(d => ({value:d.id,label:d.name}))} />
               <Input label="Date Joined" type="date" value={form.company_doj} onChange={e => setForm({...form, company_doj: e.target.value})} />
-              <Select label="Status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
+              <Select label="Status" placeholder="Select status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
                 options={[{value:1,label:'Active'},{value:0,label:'Inactive'}]} />
-              <Input label="Password" type="text" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder="Set initial password" />
+              <Input label="Password" type="text" placeholder="e.g. changeme123" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} />
               <div className="md:col-span-2">
                 <label className="form-label mb-1">Address</label>
                 <textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})}
-                  rows={2} className="form-input" placeholder="Employee address..." />
+                  rows={2} className="form-input" placeholder="e.g. 12 Nii Annan Lane, Accra" />
               </div>
             </div>
 
             <div className="border-t border-gray-100 pt-4">
               <h3 className="text-sm font-semibold text-deep-600 mb-3">Next of Kin</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input label="Full Name" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
-                <Input label="Phone" type="tel" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
-                <Select label="Relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
-                  options={[{value:'',label:'Select relationship'},{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
+                <Input label="Full Name" placeholder="e.g. Jane Doe" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
+                <Input label="Phone" type="tel" placeholder="e.g. +233240000000" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
+                <Select label="Relationship" placeholder="Select relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
+                  options={[{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
               </div>
             </div>
 
@@ -298,26 +298,26 @@ export default function Employees() {
 
             {editing ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                <Input label="Employee ID" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} />
-                <Input label="Email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                <Input label="Phone" type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                <Input label="Name *" placeholder="e.g. John Doe" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                <Input label="Employee ID" placeholder="e.g. EMP-001" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} />
+                <Input label="Email" type="email" placeholder="e.g. john@bluespaceafrica.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                <Input label="Phone" type="tel" placeholder="e.g. +233240000000" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
                 <Input label="Date of Birth" type="date" value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} />
-                <Select label="Gender" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
-                  options={[{value:'',label:'Select gender'},{value:'Male',label:'Male'},{value:'Female',label:'Female'},{value:'Other',label:'Other'}]} />
-                <Select label="Department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
-                  options={[{value:'',label:'Select department'},...departments.map(d => ({value:d.id,label:d.name}))]} />
-                <Select label="Branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
-                  options={[{value:'',label:'Select branch'},...branches.map(b => ({value:b.id,label:b.name}))]} />
-                <Select label="Designation" value={form.designation_id} onChange={e => setForm({...form, designation_id: e.target.value})}
-                  options={[{value:'',label:'Select designation'},...designations.map(d => ({value:d.id,label:d.name}))]} />
+                <Select label="Gender" placeholder="Select gender" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
+                  options={[{value:'Male',label:'Male'},{value:'Female',label:'Female'},{value:'Other',label:'Other'}]} />
+                <Select label="Department" placeholder="Select department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
+                  options={departments.map(d => ({value:d.id,label:d.name}))} />
+                <Select label="Branch" placeholder="Select branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
+                  options={branches.map(b => ({value:b.id,label:b.name}))} />
+                <Select label="Designation" placeholder="Select designation" value={form.designation_id} onChange={e => setForm({...form, designation_id: e.target.value})}
+                  options={designations.map(d => ({value:d.id,label:d.name}))} />
                 <Input label="Date Joined" type="date" value={form.company_doj} onChange={e => setForm({...form, company_doj: e.target.value})} />
-                <Select label="Status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
+                <Select label="Status" placeholder="Select status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
                   options={[{value:1,label:'Active'},{value:0,label:'Inactive'}]} />
                 <div className="md:col-span-2">
                   <label className="form-label mb-1">Address</label>
                   <textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})}
-                    rows={2} className="form-input" placeholder="Employee address..." />
+                    rows={2} className="form-input" placeholder="e.g. 12 Nii Annan Lane, Accra" />
                 </div>
               </div>
             ) : (
@@ -411,10 +411,10 @@ export default function Employees() {
               <div className="border-t border-gray-100 pt-4">
                 <h3 className="text-sm font-semibold text-deep-600 mb-3">Next of Kin</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input label="Full Name" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
-                  <Input label="Phone" type="tel" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
-                  <Select label="Relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
-                    options={[{value:'',label:'Select relationship'},{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
+                  <Input label="Full Name" placeholder="e.g. Jane Doe" value={form.next_of_kin_name} onChange={e => setForm({...form, next_of_kin_name: e.target.value})} />
+                  <Input label="Phone" type="tel" placeholder="e.g. +233240000000" value={form.next_of_kin_phone} onChange={e => setForm({...form, next_of_kin_phone: e.target.value})} />
+                  <Select label="Relationship" placeholder="Select relationship" value={form.next_of_kin_relationship} onChange={e => setForm({...form, next_of_kin_relationship: e.target.value})}
+                    options={[{value:'Spouse',label:'Spouse'},{value:'Parent',label:'Parent'},{value:'Child',label:'Child'},{value:'Sibling',label:'Sibling'},{value:'Other',label:'Other'}]} />
                 </div>
               </div>
             )}
