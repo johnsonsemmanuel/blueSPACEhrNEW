@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, CheckCircle, XCircle, Download, Trash2, Eye } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Download, Trash2, Eye, Clock } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -14,6 +14,9 @@ export default function LeaveRequests() {
   const [selected, setSelected] = useState(null)
   const [viewOnly, setViewOnly] = useState(null)
   const [remark, setRemark] = useState('')
+  const [extendTarget, setExtendTarget] = useState(null)
+  const [extendDate, setExtendDate] = useState('')
+  const [extendReason, setExtendReason] = useState('')
 
   useEffect(() => {
     api.get('/leaves').then(r => setLeaves(r.data)).catch(() => {})
@@ -41,6 +44,20 @@ export default function LeaveRequests() {
       setLeaves(leaves.filter(l => l.id !== id))
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to delete')
+    }
+  }
+
+  const handleExtend = async () => {
+    if (!extendDate) return toast.error('Please select a new end date')
+    try {
+      const res = await api.put(`/leaves/${extendTarget.id}`, { end_date: extendDate, leave_reason: extendReason || extendTarget.leave_reason })
+      setLeaves(leaves.map(l => l.id === extendTarget.id ? { ...l, end_date: extendDate } : l))
+      toast.success('Leave extended successfully')
+      setExtendTarget(null)
+      setExtendDate('')
+      setExtendReason('')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to extend leave')
     }
   }
 
@@ -168,6 +185,13 @@ export default function LeaveRequests() {
                               </button>
                             </>
                           ) : null}
+                          <button
+                            onClick={() => { setExtendTarget(leave); setExtendDate(leave.end_date); setExtendReason('') }}
+                            className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            title="Extend Leave"
+                          >
+                            <Clock size={15} />
+                          </button>
                           <button
                             onClick={() => handleDelete(leave.id)}
                             className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
@@ -320,6 +344,58 @@ export default function LeaveRequests() {
                 <p className="text-sm text-deep-600 bg-gray-50 rounded-md p-3">{viewOnly.remark}</p>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Extend Leave Modal */}
+      <Modal open={!!extendTarget} onClose={() => setExtendTarget(null)} title={`Extend: ${extendTarget?.employee_name}'s ${extendTarget?.leave_type_name}`} size="md">
+        {extendTarget && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-gray-500">Current Start Date</p>
+                <p className="font-medium text-deep-600">{extendTarget.start_date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Current End Date</p>
+                <p className="font-medium text-deep-600">{extendTarget.end_date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Total Days</p>
+                <p className="font-medium text-deep-600">{extendTarget.total_leave_days}</p>
+              </div>
+            </div>
+            <div>
+              <label className="form-label mb-1">New End Date</label>
+              <input
+                type="date"
+                value={extendDate}
+                min={extendTarget.end_date}
+                onChange={(e) => setExtendDate(e.target.value)}
+                className="form-input"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Must be on or after {extendTarget.end_date}</p>
+            </div>
+            <div>
+              <label className="form-label mb-1">Reason (optional)</label>
+              <textarea
+                value={extendReason}
+                onChange={(e) => setExtendReason(e.target.value)}
+                rows={2}
+                className="form-input"
+                placeholder="Reason for extension..."
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="primary" onClick={handleExtend} className="flex-1">
+                <Clock size={14} />
+                Extend Leave
+              </Button>
+              <Button variant="secondary" onClick={() => setExtendTarget(null)} className="flex-1">
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
       </Modal>
