@@ -15,6 +15,7 @@ export default function ApplyLeave() {
   const [leaveTypes, setLeaveTypes] = useState([])
   const [employees, setEmployees] = useState([])
   const [balance, setBalance] = useState([])
+  const [holidays, setHolidays] = useState([])
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [form, setForm] = useState({
@@ -33,13 +34,38 @@ export default function ApplyLeave() {
     api.get('/leave-types').then(r => setLeaveTypes(r.data)).catch(() => {})
     api.get('/employees/list').then(r => setEmployees(r.data)).catch(() => {})
     api.get('/leaves/balance').then(r => setBalance(r.data)).catch(() => {})
+    api.get('/leaves/holidays').then(r => setHolidays(r.data)).catch(() => {})
   }, [])
 
   const selectedType = leaveTypes.find(lt => lt.id === parseInt(form.leave_type_id))
   const remainingBalance = balance.find(b => b.id === parseInt(form.leave_type_id))?.remaining
 
+  function getDateRange(start, end) {
+    const dates = []
+    const current = new Date(start)
+    const last = new Date(end)
+    while (current <= last) {
+      dates.push(current.toISOString().split('T')[0])
+      current.setDate(current.getDate() + 1)
+    }
+    return dates
+  }
+
+  function countWorkingDays(start, end) {
+    const allDates = getDateRange(start, end)
+    const holidaySet = new Set()
+    holidays.forEach(h => {
+      const hDates = getDateRange(h.date, h.end_date || h.date)
+      hDates.forEach(d => holidaySet.add(d))
+    })
+    return allDates.filter(d => {
+      const day = new Date(d).getDay()
+      return day !== 0 && day !== 6 && !holidaySet.has(d)
+    }).length
+  }
+
   const diffDays = form.start_date && form.end_date && !form.is_half_day
-    ? Math.ceil((new Date(form.end_date) - new Date(form.start_date)) / (1000 * 60 * 60 * 24)) + 1
+    ? countWorkingDays(form.start_date, form.end_date) || 1
     : form.is_half_day ? 0.5 : 0
 
   const handoverEmp = employees.find(e => e.id === parseInt(form.handover_to))
