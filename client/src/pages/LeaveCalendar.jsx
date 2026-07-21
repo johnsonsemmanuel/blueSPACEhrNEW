@@ -19,7 +19,14 @@ export default function LeaveCalendar() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
   const firstDay = new Date(currentYear, currentMonth, 1).getDay()
 
+  const isWeekend = (day) => {
+    const date = new Date(currentYear, currentMonth, day)
+    const dayOfWeek = date.getDay()
+    return dayOfWeek === 0 || dayOfWeek === 6
+  }
+
   const getLeavesForDay = (day) => {
+    if (isWeekend(day)) return []
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     return leaves.filter(l => {
       const start = l.start_date
@@ -83,11 +90,12 @@ export default function LeaveCalendar() {
 
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1
+              const weekend = isWeekend(day)
               const dayLeaves = getLeavesForDay(day)
               const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear()
               return (
-                <div key={day} className={`bg-white min-h-[90px] p-1.5 ${isToday ? 'ring-2 ring-brand-500 ring-inset' : ''}`}>
-                  <span className={`text-xs font-medium ${isToday ? 'text-deep-600' : 'text-gray-600'}`}>
+                <div key={day} className={`min-h-[90px] p-1.5 ${weekend ? 'bg-gray-100' : 'bg-white'} ${isToday && !weekend ? 'ring-2 ring-brand-500 ring-inset' : ''}`}>
+                  <span className={`text-xs font-medium ${isToday && !weekend ? 'text-deep-600' : weekend ? 'text-gray-400' : 'text-gray-600'}`}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-0.5">
