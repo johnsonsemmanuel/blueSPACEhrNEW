@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, CheckCircle, XCircle, Download, Trash2, Eye, Clock } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Download, Trash2, Eye, Clock, Mail } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -17,6 +17,14 @@ export default function LeaveRequests() {
   const [extendTarget, setExtendTarget] = useState(null)
   const [extendDate, setExtendDate] = useState('')
   const [extendReason, setExtendReason] = useState('')
+  const [emailLogs, setEmailLogs] = useState(null)
+  const [showEmailLogs, setShowEmailLogs] = useState(false)
+
+  const loadEmailLogs = () => {
+    setShowEmailLogs(true)
+    setEmailLogs(null)
+    api.get('/leaves/email-logs').then(r => setEmailLogs(r.data)).catch(() => setEmailLogs([]))
+  }
 
   useEffect(() => {
     api.get('/leaves').then(r => setLeaves(r.data)).catch(() => {})
@@ -91,13 +99,22 @@ export default function LeaveRequests() {
               <p className="text-xs text-gray-500">Review and manage employee leave requests</p>
             </div>
           </div>
-          <button
-            onClick={handleExport}
-            className="h-9 px-3 bg-white border border-gray-200 text-gray-600 rounded-md text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={loadEmailLogs}
+              className="h-9 px-3 bg-white border border-gray-200 text-gray-600 rounded-md text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <Mail size={14} />
+              Email Logs
+            </button>
+            <button
+              onClick={handleExport}
+              className="h-9 px-3 bg-white border border-gray-200 text-gray-600 rounded-md text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <Download size={14} />
+              Export CSV
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-4 flex-wrap">
@@ -396,6 +413,50 @@ export default function LeaveRequests() {
                 Cancel
               </Button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Email Logs Modal */}
+      <Modal open={showEmailLogs} onClose={() => setShowEmailLogs(false)} title="Email Delivery Logs" size="xl">
+        {emailLogs === null ? (
+          <div className="text-center py-8 text-gray-400 text-sm">Loading...</div>
+        ) : emailLogs.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No email logs found</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500 font-medium uppercase tracking-wider border-b border-gray-100">
+                  <th className="px-4 py-3">Recipient</th>
+                  <th className="px-4 py-3">Subject</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Error</th>
+                  <th className="px-4 py-3">Sent At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {emailLogs.map((log, i) => (
+                  <tr key={log.id} className={`${i !== emailLogs.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                    <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.recipient_email || '–'}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '–'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                        log.status === 'sent' ? 'bg-emerald-50 text-emerald-700' :
+                        log.status === 'failed' ? 'bg-red-50 text-red-700' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs max-w-[200px] truncate">{log.error_message || '–'}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '–'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Modal>

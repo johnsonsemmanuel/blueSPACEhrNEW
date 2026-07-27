@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
 const { sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification, sendLeaveExtendedNotification } = require('../services/email');
+const { logAction, getClientIp } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -243,6 +244,35 @@ router.get('/notifications', authenticate, async (req, res) => {
   }
 });
 
+router.get('/admin-logs', authenticate, authorize('Management'), async (req, res) => {
+  try {
+    const { search, severity, action: actionFilter } = req.query;
+    let query = 'SELECT * FROM audit_logs WHERE 1=1';
+    const params = [];
+
+    if (search) {
+      query += ' AND (description LIKE ? OR user_name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+    if (severity) {
+      query += ' AND severity = ?';
+      params.push(severity);
+    }
+    if (actionFilter) {
+      query += ' AND action = ?';
+      params.push(actionFilter);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT 200';
+
+    const [rows] = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Admin logs fetch error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/email-logs', authenticate, authorize('Management'), async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -378,6 +408,14 @@ router.post('/', authenticate, async (req, res) => {
     }
 
     res.status(201).json({ id: result.insertId, message: 'Leave request submitted' });
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'leave_applied', entityType: 'leave', entityId: result.insertId,
+      description: `${req.user.name} submitted a ${leaveType[0].title} leave request (${start_date} to ${end_date})`,
+      metadata: { leaveType: leaveType[0].title, startDate: start_date, endDate: end_date, days: String(diffDays) },
+      ip: getClientIp(req), severity: 'INFO',
+    });
   } catch (err) {
     console.error('Leave create error:', err);
     res.status(500).json({ error: 'Server error', detail: err.message });
@@ -472,6 +510,13 @@ router.put('/:id', authenticate, async (req, res) => {
           newEndDate: end_date,
           totalDays: String(diffDays),
         });
+        logAction(pool, {
+          userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+          action: 'leave_extended', entityType: 'leave', entityId: parseInt(req.params.id),
+          description: `${req.user.name} extended ${emp.employee_name}'s ${emp.leave_type_name} leave to ${end_date}`,
+          metadata: { employeeName: emp.employee_name, leaveType: emp.leave_type_name, oldEndDate: leave.end_date, newEndDate: end_date, totalDays: String(diffDays) },
+          ip: getClientIp(req), severity: 'INFO',
+        });
       }
     }
 
@@ -517,6 +562,17 @@ router.put('/:id/status', authenticate, authorize('Management'), async (req, res
     }
 
     res.json({ message: `Leave ${status.toLowerCase()}` });
+
+    if (leaves.length > 0) {
+      const lv = leaves[0];
+      logAction(pool, {
+        userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+        action: `leave_${status.toLowerCase()}`, entityType: 'leave', entityId: parseInt(req.params.id),
+        description: `${req.user.name} ${status.toLowerCase()} ${lv.employee_name}'s ${lv.leave_type_name} leave`,
+        metadata: { employeeName: lv.employee_name, leaveType: lv.leave_type_name, startDate: lv.start_date, endDate: lv.end_date, remark },
+        ip: getClientIp(req), severity: 'INFO',
+      });
+    }
   } catch (err) {
     console.error('Leave status update error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -542,6 +598,15 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
 
     await pool.query('DELETE FROM leaves WHERE id = ?', [req.params.id]);
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'leave_deleted', entityType: 'leave', entityId: parseInt(req.params.id),
+      description: `${req.user.name} deleted a leave request (status: ${leaves[0].status})`,
+      metadata: { status: leaves[0].status, employeeId: leaves[0].employee_id },
+      ip: getClientIp(req), severity: 'WARNING',
+    });
+
     res.json({ message: 'Leave deleted successfully' });
   } catch (err) {
     console.error('Leave delete error:', err);
@@ -566,6 +631,13 @@ router.put('/:id/cancel', authenticate, async (req, res) => {
       "UPDATE leaves SET status = 'Cancelled', updated_at = NOW() WHERE id = ?",
       [req.params.id]
     );
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'leave_cancelled', entityType: 'leave', entityId: parseInt(req.params.id),
+      description: `${req.user.name} cancelled their ${leaves[0].leave_type_id ? 'leave' : ''} request`,
+      ip: getClientIp(req), severity: 'INFO',
+    });
 
     res.json({ message: 'Leave cancelled successfully' });
   } catch (err) {

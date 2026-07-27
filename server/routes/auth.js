@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
 const { sendPasswordResetNotification } = require('../services/email');
+const { logAction, getClientIp } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -28,6 +29,11 @@ router.post('/login', async (req, res) => {
 
     if (users.length === 0) {
       console.warn('[login] No active user found for email:', email);
+      logAction(pool, {
+        action: 'login_failure', entityType: 'user',
+        description: `Login attempt for non-existent user: ${email}`,
+        ip: getClientIp(req), severity: 'WARNING',
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -41,6 +47,12 @@ router.post('/login', async (req, res) => {
     }
     if (!valid) {
       console.warn('[login] Password mismatch for user:', user.id, user.email);
+      logAction(pool, {
+        userId: user.id, userName: user.name, userRole: normalizeType(user.type),
+        action: 'login_failure', entityType: 'user', entityId: user.id,
+        description: `Failed login attempt for ${user.email}`,
+        ip: getClientIp(req), severity: 'WARNING',
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -50,6 +62,13 @@ router.post('/login', async (req, res) => {
     );
 
     const role = normalizeType(user.type);
+
+    logAction(pool, {
+      userId: user.id, userName: user.name, userRole: role,
+      action: 'login_success', entityType: 'user', entityId: user.id,
+      description: `${user.name} logged in successfully`,
+      ip: getClientIp(req), severity: 'INFO',
+    });
 
     const token = jwt.sign(
       {
@@ -235,6 +254,13 @@ router.post('/admin/reset-employee-password', authenticate, authorize('Managemen
           toEmail: userRows[0].email,
           toName: userRows[0].name,
           newPassword,
+        });
+        logAction(pool, {
+          userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+          action: 'admin_password_reset', entityType: 'user', entityId: user_id,
+          description: `${req.user.name} reset password for ${userRows[0].name} (${userRows[0].email})`,
+          metadata: { targetUserId: user_id, targetEmail: userRows[0].email },
+          ip: getClientIp(req), severity: 'WARNING',
         });
       }
     } catch (notifyErr) {

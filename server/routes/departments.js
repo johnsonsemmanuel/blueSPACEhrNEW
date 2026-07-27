@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logAction, getClientIp } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -30,6 +31,13 @@ router.post('/', authenticate, authorize('Management'), async (req, res) => {
       [branch_id || 1, name, req.user.id]
     );
     res.status(201).json({ id: result.insertId, name });
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'department_created', entityType: 'department', entityId: result.insertId,
+      description: `${req.user.name} created department "${name}"`,
+      ip: getClientIp(req), severity: 'INFO',
+    });
   } catch (err) {
     console.error('Department create error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -44,6 +52,13 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
       [branch_id || 1, name, req.params.id]
     );
     res.json({ message: 'Department updated' });
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'department_updated', entityType: 'department', entityId: parseInt(req.params.id),
+      description: `${req.user.name} updated department "${name}"`,
+      ip: getClientIp(req), severity: 'INFO',
+    });
   } catch (err) {
     console.error('Department update error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -53,6 +68,14 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
 router.delete('/:id', authenticate, authorize('Management'), async (req, res) => {
   try {
     await pool.query('DELETE FROM departments WHERE id = ?', [req.params.id]);
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'department_deleted', entityType: 'department', entityId: parseInt(req.params.id),
+      description: `${req.user.name} deleted department #${req.params.id}`,
+      ip: getClientIp(req), severity: 'WARNING',
+    });
+
     res.json({ message: 'Department deleted' });
   } catch (err) {
     console.error('Department delete error:', err);

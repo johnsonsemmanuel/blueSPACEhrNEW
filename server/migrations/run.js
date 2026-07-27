@@ -34,6 +34,27 @@ const migrations = [
             PRIMARY KEY (id)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   },
+  {
+    name: 'create_audit_logs_table',
+    sql: `CREATE TABLE IF NOT EXISTS audit_logs (
+            id           bigint unsigned NOT NULL AUTO_INCREMENT,
+            user_id      int DEFAULT NULL,
+            user_name    varchar(191) DEFAULT NULL,
+            user_role    varchar(20) DEFAULT NULL,
+            action       varchar(50) NOT NULL,
+            entity_type  varchar(50) DEFAULT NULL,
+            entity_id    int DEFAULT NULL,
+            description  text NOT NULL,
+            metadata     json DEFAULT NULL,
+            ip_address   varchar(45) DEFAULT NULL,
+            severity     varchar(10) NOT NULL DEFAULT 'INFO',
+            created_at   timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            INDEX idx_action (action),
+            INDEX idx_severity (severity),
+            INDEX idx_created_at (created_at)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  },
 ];
 
 async function runMigrations() {

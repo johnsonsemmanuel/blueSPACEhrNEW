@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logAction, getClientIp } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -134,6 +135,14 @@ router.post('/', authenticate, authorize('Management'), async (req, res) => {
     `, [empResult.insertId]);
 
     res.status(201).json(created[0]);
+
+    logAction(pool, {
+      userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+      action: 'employee_created', entityType: 'employee', entityId: empResult.insertId,
+      description: `${req.user.name} created employee ${name} (${email})`,
+      metadata: { email, departmentId: department_id, branchId: branch_id, role: userType },
+      ip: getClientIp(req), severity: 'INFO',
+    });
   } catch (err) {
     console.error('Employee create error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -176,7 +185,18 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
     if (type !== undefined && existing[0].user_id) {
       const userType = (type === 'Management') ? 'Management' : 'Staff';
       try {
+        const [prevUser] = await pool.query('SELECT type FROM users WHERE id = ?', [existing[0].user_id]);
+        const oldRole = prevUser.length > 0 ? prevUser[0].type : null;
         await pool.query('UPDATE users SET type = ? WHERE id = ?', [userType, existing[0].user_id]);
+        if (oldRole && oldRole !== userType) {
+          logAction(pool, {
+            userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+            action: 'employee_role_changed', entityType: 'employee', entityId: parseInt(req.params.id),
+            description: `${req.user.name} changed ${name || 'employee'}'s role from ${oldRole} to ${userType}`,
+            metadata: { oldRole, newRole: userType, userId: existing[0].user_id },
+            ip: getClientIp(req), severity: 'WARNING',
+          });
+        }
       } catch (typeErr) {
         console.error('Role update error:', typeErr);
       }
@@ -199,6 +219,16 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
     `, [req.params.id]);
 
     res.json(updated[0]);
+
+    if (updates.length > 1) {
+      logAction(pool, {
+        userId: req.user.id, userName: req.user.name, userRole: req.user.type,
+        action: 'employee_updated', entityType: 'employee', entityId: parseInt(req.params.id),
+        description: `${req.user.name} updated employee ${name || req.params.id}`,
+        metadata: { fields: updates.filter(u => u !== 'updated_at = NOW()').map(u => u.replace(' = ?', '')) },
+        ip: getClientIp(req), severity: 'INFO',
+      });
+    }
   } catch (err) {
     console.error('Employee update error:', err);
     res.status(500).json({ error: 'Server error' });

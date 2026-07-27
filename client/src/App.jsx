@@ -10,6 +10,7 @@ import DepartmentsPage from './pages/Departments'
 import Employees from './pages/Employees'
 import LeaveCalendar from './pages/LeaveCalendar'
 import Profile from './pages/Profile'
+import AdminLogs from './pages/AdminLogs'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="leave-types" element={<ProtectedRoute roles={['Management']}><LeaveTypesPage /></ProtectedRoute>} />
         <Route path="employees" element={<ProtectedRoute roles={['Management']}><Employees /></ProtectedRoute>} />
         <Route path="calendar" element={<ProtectedRoute><LeaveCalendar /></ProtectedRoute>} />
+        <Route path="admin-logs" element={<ProtectedRoute roles={['Management']}><AdminLogs /></ProtectedRoute>} />
         <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
