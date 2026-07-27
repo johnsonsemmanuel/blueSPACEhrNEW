@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
+const { sendPasswordResetNotification } = require('../services/email');
 
 const router = express.Router();
 
@@ -226,6 +227,19 @@ router.post('/admin/reset-employee-password', authenticate, authorize('Managemen
       'UPDATE users SET password = ?, force_password_change = 1 WHERE id = ?',
       [hash, user_id]
     );
+
+    try {
+      const [userRows] = await pool.query('SELECT name, email FROM users WHERE id = ?', [user_id]);
+      if (userRows.length > 0) {
+        sendPasswordResetNotification({
+          toEmail: userRows[0].email,
+          toName: userRows[0].name,
+          newPassword,
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Password reset email error (non-fatal):', notifyErr);
+    }
 
     res.json({ message: 'Password reset. Employee must set new password on next login.' });
   } catch (err) {

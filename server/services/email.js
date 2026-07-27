@@ -1,32 +1,27 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-let transporter = null;
+let resend = null;
 
-function initTransporter() {
-  if (transporter) return transporter;
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.warn('SMTP not configured — email sending disabled');
+function getClient() {
+  if (resend) return resend;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('RESEND_API_KEY not configured — email sending disabled');
     return null;
   }
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: parseInt(SMTP_PORT || '587'),
-    secure: SMTP_PORT === '465',
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-  return transporter;
+  resend = new Resend(apiKey);
+  return resend;
 }
 
 async function sendEmail({ to, subject, html }) {
   try {
-    const t = initTransporter();
-    if (!t) {
-      console.log(`[email] Skipped (no SMTP): to=${to} subject="${subject}"`);
+    const client = getClient();
+    if (!client) {
+      console.log(`[email] Skipped (no API key): to=${to} subject="${subject}"`);
       return false;
     }
-    await t.sendMail({
-      from: process.env.SMTP_FROM || SMTP_USER,
+    await client.emails.send({
+      from: process.env.RESEND_FROM || 'noreply@bluespacehr.com',
       to,
       subject,
       html,
@@ -91,4 +86,36 @@ async function sendLeaveStatusNotification({ toEmail, toName, leaveType, status,
   return sendEmail({ to: toEmail, subject: `Leave ${status}: ${leaveType}`, html });
 }
 
-module.exports = { sendEmail, sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification };
+async function sendLeaveExtendedNotification({ toEmail, toName, leaveType, reviewer, oldEndDate, newEndDate, totalDays }) {
+  const html = `
+    <h2>Leave Extended</h2>
+    <p>Hello ${toName},</p>
+    <p>Your <strong>${leaveType}</strong> leave has been <strong>extended</strong> by ${reviewer}.</p>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;">
+      <tr><td><strong>Previous End Date</strong></td><td>${oldEndDate}</td></tr>
+      <tr><td><strong>New End Date</strong></td><td>${newEndDate}</td></tr>
+      <tr><td><strong>Total Days</strong></td><td>${totalDays}</td></tr>
+    </table>
+    <hr>
+    <p style="color:#888;font-size:12px;">BlueSPACE HR System</p>
+  `;
+  return sendEmail({ to: toEmail, subject: `Leave Extended: ${leaveType}`, html });
+}
+
+async function sendPasswordResetNotification({ toEmail, toName, newPassword }) {
+  const html = `
+    <h2>Password Reset</h2>
+    <p>Hello ${toName},</p>
+    <p>Your password has been reset by an administrator.</p>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;">
+      <tr><td><strong>New Password</strong></td><td>${newPassword}</td></tr>
+    </table>
+    <p>You will be prompted to set a new password on your next login.</p>
+    <p><a href="https://hr.bihlabs.com" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px;">Login to System</a></p>
+    <hr>
+    <p style="color:#888;font-size:12px;">BlueSPACE HR System</p>
+  `;
+  return sendEmail({ to: toEmail, subject: 'Password Reset - BlueSPACE HR', html });
+}
+
+module.exports = { sendEmail, sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification, sendLeaveExtendedNotification, sendPasswordResetNotification };

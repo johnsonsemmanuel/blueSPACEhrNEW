@@ -1,7 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
-const { sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification } = require('../services/email');
+const { sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification, sendLeaveExtendedNotification } = require('../services/email');
 
 const router = express.Router();
 
@@ -126,8 +126,8 @@ router.get('/balance', authenticate, async (req, res) => {
   try {
     const [leaveTypes] = await pool.query('SELECT id, title, days FROM leave_types');
     const [usedLeaves] = await pool.query(
-      `SELECT leave_type_id, SUM(CAST(total_leave_days AS UNSIGNED)) AS used_days
-       FROM leaves WHERE employee_id = ? AND status = 'Approved'
+      `SELECT leave_type_id, SUM(CAST(total_leave_days AS DECIMAL(10,1))) AS used_days
+       FROM leaves WHERE employee_id = ? AND status = 'Approved' AND YEAR(start_date) = YEAR(CURDATE())
        GROUP BY leave_type_id`,
       [req.user.employeeId]
     );
@@ -170,9 +170,9 @@ router.get('/my-stats', authenticate, async (req, res) => {
     );
     const [balance] = await pool.query(
       `SELECT lt.title, lt.days AS total,
-              COALESCE(SUM(CAST(l.total_leave_days AS UNSIGNED)), 0) AS used
+              COALESCE(SUM(CAST(l.total_leave_days AS DECIMAL(10,1))), 0) AS used
        FROM leave_types lt
-       LEFT JOIN leaves l ON l.leave_type_id = lt.id AND l.employee_id = ? AND l.status = 'Approved'
+       LEFT JOIN leaves l ON l.leave_type_id = lt.id AND l.employee_id = ? AND l.status = 'Approved' AND YEAR(l.start_date) = YEAR(CURDATE())
        GROUP BY lt.id, lt.title, lt.days`,
       [req.user.employeeId]
     );
@@ -437,6 +437,31 @@ router.put('/:id', authenticate, async (req, res) => {
         req.params.id
       ]
     );
+
+    if (isMgmt && end_date && end_date !== leave.end_date) {
+      const [empRows] = await pool.query(
+        `SELECT e.name AS employee_name, u.email AS employee_email, u.name AS employee_name_user, lt.title AS leave_type_name
+         FROM employees e JOIN users u ON e.user_id = u.id JOIN leave_types lt ON lt.id = ?
+         WHERE e.id = ?`,
+        [leave_type_id || leave.leave_type_id, leave.employee_id]
+      );
+      if (empRows.length > 0) {
+        const emp = empRows[0];
+        await pool.query(
+          'INSERT INTO notifications (user_id, type, data, is_read, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())',
+          [leave.employee_id, 'leave_extended', JSON.stringify({ leaveId: req.params.id, leaveType: emp.leave_type_name, oldEndDate: leave.end_date, newEndDate: end_date, totalDays: String(diffDays), reviewer: req.user.name })]
+        );
+        sendLeaveExtendedNotification({
+          toEmail: emp.employee_email,
+          toName: emp.employee_name_user,
+          leaveType: emp.leave_type_name,
+          reviewer: req.user.name,
+          oldEndDate: leave.end_date,
+          newEndDate: end_date,
+          totalDays: String(diffDays),
+        });
+      }
+    }
 
     res.json({ message: 'Leave updated successfully' });
   } catch (err) {
