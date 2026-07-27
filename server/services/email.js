@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const pool = require('../config/database');
 
 let resend = null;
 
@@ -13,11 +14,23 @@ function getClient() {
   return resend;
 }
 
+async function logEmail(to, subject, status, errorMessage) {
+  try {
+    await pool.query(
+      'INSERT INTO email_logs (to_email, subject, status, error_message, created_at) VALUES (?, ?, ?, ?, NOW())',
+      [to, subject, status, errorMessage || null]
+    );
+  } catch (err) {
+    console.error('[email-log] Failed to log email:', err.message);
+  }
+}
+
 async function sendEmail({ to, subject, html }) {
   try {
     const client = getClient();
     if (!client) {
       console.log(`[email] Skipped (no API key): to=${to} subject="${subject}"`);
+      await logEmail(to, subject, 'skipped', 'No API key configured');
       return false;
     }
     await client.emails.send({
@@ -27,9 +40,11 @@ async function sendEmail({ to, subject, html }) {
       html,
     });
     console.log(`[email] Sent to ${to}: "${subject}"`);
+    await logEmail(to, subject, 'sent', null);
     return true;
   } catch (err) {
     console.error('[email] Error:', err.message);
+    await logEmail(to, subject, 'failed', err.message);
     return false;
   }
 }

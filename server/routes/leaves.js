@@ -243,6 +243,18 @@ router.get('/notifications', authenticate, async (req, res) => {
   }
 });
 
+router.get('/email-logs', authenticate, authorize('Management'), async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM email_logs ORDER BY created_at DESC LIMIT 50'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Email logs fetch error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 function getDateRange(start, end) {
   const dates = [];
   const current = new Date(start);

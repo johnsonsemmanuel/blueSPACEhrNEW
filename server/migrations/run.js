@@ -22,6 +22,18 @@ const migrations = [
             ADD COLUMN IF NOT EXISTS leave_address text AFTER contact_during_leave,
             ADD COLUMN IF NOT EXISTS is_half_day tinyint(1) DEFAULT '0' AFTER leave_address`,
   },
+  {
+    name: 'create_email_logs_table',
+    sql: `CREATE TABLE IF NOT EXISTS email_logs (
+            id bigint unsigned NOT NULL AUTO_INCREMENT,
+            to_email varchar(191) NOT NULL,
+            subject varchar(191) NOT NULL,
+            status varchar(20) NOT NULL DEFAULT 'sent',
+            error_message text DEFAULT NULL,
+            created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  },
 ];
 
 async function runMigrations() {

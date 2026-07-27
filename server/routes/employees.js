@@ -144,7 +144,7 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
   try {
     const { name, email, phone, address, dob, gender, department_id, branch_id, designation_id, company_doj, employee_id, is_active, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, type } = req.body;
 
-    const [existing] = await pool.query('SELECT id FROM employees WHERE id = ?', [req.params.id]);
+    const [existing] = await pool.query('SELECT id, user_id FROM employees WHERE id = ?', [req.params.id]);
     if (existing.length === 0) {
       return res.status(404).json({ error: 'Employee not found' });
     }
@@ -173,9 +173,13 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
 
     await pool.query(`UPDATE employees SET ${updates.join(', ')} WHERE id = ?`, params);
 
-    if (type !== undefined) {
+    if (type !== undefined && existing[0].user_id) {
       const userType = (type === 'Management') ? 'Management' : 'Staff';
-      await pool.query('UPDATE users SET type = ? WHERE id = ?', [userType, existing[0].user_id || (await pool.query('SELECT user_id FROM employees WHERE id = ?', [req.params.id]))[0][0]?.user_id]);
+      try {
+        await pool.query('UPDATE users SET type = ? WHERE id = ?', [userType, existing[0].user_id]);
+      } catch (typeErr) {
+        console.error('Role update error:', typeErr);
+      }
     }
 
     const [updated] = await pool.query(`
