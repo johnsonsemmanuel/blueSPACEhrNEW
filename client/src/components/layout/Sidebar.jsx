@@ -42,7 +42,7 @@ export default function Sidebar({ open, onOpen, onClose }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed top-0 left-0 z-50 h-screen w-60 bg-deep-600 text-white flex-col">
         <div className="flex items-center justify-between h-14 px-4 border-b border-white/10 shrink-0">
-          <img src="/logo-light.png" alt="BlueSPACE" className="h-7 w-auto" />
+          <img src="/logo-white.png" alt="BlueSPACE" className="h-7 w-auto" />
         </div>
 
         <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">

@@ -86,7 +86,7 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <img src="/logo-light.png" alt="BlueSPACE" className="h-14 w-auto mx-auto mb-6" />
+            <img src="/logo-white.png" alt="BlueSPACE" className="h-14 w-auto mx-auto mb-6" />
              <h1 className="text-3xl font-bold text-white mb-3">Bluespace Financial Cloud</h1>
             <p className="text-blue-200 text-sm leading-relaxed">
               Leave Management System – streamline employee leave requests, approvals, and tracking across the organization.

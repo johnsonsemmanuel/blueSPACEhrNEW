@@ -14,7 +14,7 @@ router.get('/', authenticate, authorize('Management'), async (req, res) => {
              e.next_of_kin_name, e.next_of_kin_phone, e.next_of_kin_relationship,
              d.name AS department_name, br.name AS branch_name,
              ds.name AS designation_name,
-             u.avatar
+             u.avatar, u.type AS user_type
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN branches br ON e.branch_id = br.id
@@ -73,7 +73,7 @@ router.get('/designations', authenticate, async (req, res) => {
 
 router.post('/', authenticate, authorize('Management'), async (req, res) => {
   try {
-    const { name, email, phone, address, dob, gender, department_id, branch_id, designation_id, company_doj, employee_id, is_active, password, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship } = req.body;
+    const { name, email, phone, address, dob, gender, department_id, branch_id, designation_id, company_doj, employee_id, is_active, password, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, type } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
@@ -85,10 +85,11 @@ router.post('/', authenticate, authorize('Management'), async (req, res) => {
     }
 
     const hash = await bcrypt.hash(password || 'changeme', 10);
+    const userType = (type === 'Management') ? 'Management' : 'Staff';
 
     const [userResult] = await pool.query(
       'INSERT INTO users (name, email, password, type, phone, address, avatar, is_active, force_password_change, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      [name, email, hash, 'Staff', phone || '', address || '', 'avatar.png', is_active !== 0 ? 1 : 0, 1, req.user.id]
+      [name, email, hash, userType, phone || '', address || '', 'avatar.png', is_active !== 0 ? 1 : 0, 1, req.user.id]
     );
 
     const [empResult] = await pool.query(
@@ -123,7 +124,7 @@ router.post('/', authenticate, authorize('Management'), async (req, res) => {
              e.next_of_kin_name, e.next_of_kin_phone, e.next_of_kin_relationship,
              d.name AS department_name, br.name AS branch_name,
              ds.name AS designation_name,
-             u.avatar
+             u.avatar, u.type AS user_type
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN branches br ON e.branch_id = br.id
@@ -141,7 +142,7 @@ router.post('/', authenticate, authorize('Management'), async (req, res) => {
 
 router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
   try {
-    const { name, email, phone, address, dob, gender, department_id, branch_id, designation_id, company_doj, employee_id, is_active, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship } = req.body;
+    const { name, email, phone, address, dob, gender, department_id, branch_id, designation_id, company_doj, employee_id, is_active, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, type } = req.body;
 
     const [existing] = await pool.query('SELECT id FROM employees WHERE id = ?', [req.params.id]);
     if (existing.length === 0) {
@@ -172,6 +173,11 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
 
     await pool.query(`UPDATE employees SET ${updates.join(', ')} WHERE id = ?`, params);
 
+    if (type !== undefined) {
+      const userType = (type === 'Management') ? 'Management' : 'Staff';
+      await pool.query('UPDATE users SET type = ? WHERE id = ?', [userType, existing[0].user_id || (await pool.query('SELECT user_id FROM employees WHERE id = ?', [req.params.id]))[0][0]?.user_id]);
+    }
+
     const [updated] = await pool.query(`
       SELECT e.id, e.name, e.email, e.employee_id, e.phone, e.dob, e.gender,
              e.branch_id, e.department_id, e.designation_id, e.company_doj, e.is_active,
@@ -179,7 +185,7 @@ router.put('/:id', authenticate, authorize('Management'), async (req, res) => {
              e.next_of_kin_name, e.next_of_kin_phone, e.next_of_kin_relationship,
              d.name AS department_name, br.name AS branch_name,
              ds.name AS designation_name,
-             u.avatar
+             u.avatar, u.type AS user_type
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN branches br ON e.branch_id = br.id

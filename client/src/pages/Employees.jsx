@@ -72,6 +72,7 @@ export default function Employees() {
     next_of_kin_name: '',
     next_of_kin_phone: '',
     next_of_kin_relationship: '',
+    type: 'Staff',
   })
 
   const openAdd = () => {
@@ -98,6 +99,7 @@ export default function Employees() {
       next_of_kin_name: selected.next_of_kin_name || '',
       next_of_kin_phone: selected.next_of_kin_phone || '',
       next_of_kin_relationship: selected.next_of_kin_relationship || '',
+      type: selected.user_type || 'Staff',
     })
     setEditing(true)
   }
@@ -222,6 +224,9 @@ export default function Employees() {
                     <Badge variant={emp.is_active ? 'success' : 'danger'}>
                       {emp.is_active ? 'Active' : 'Inactive'}
                     </Badge>
+                    {emp.user_type === 'Management' && (
+                      <Badge variant="info">Management</Badge>
+                    )}
                   </div>
                 </div>
                 <ChevronRight size={14} className="text-gray-300 mt-1 shrink-0" />
@@ -251,6 +256,8 @@ export default function Employees() {
               <Input label="Date Joined" type="date" value={form.company_doj} onChange={e => setForm({...form, company_doj: e.target.value})} />
               <Select label="Status" placeholder="Select status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
                 options={[{value:1,label:'Active'},{value:0,label:'Inactive'}]} />
+              <Select label="Role" placeholder="Select role" value={form.type} onChange={e => setForm({...form, type: e.target.value})}
+                options={[{value:'Staff',label:'Staff'},{value:'Management',label:'Management'}]} />
               <Input label="Password" type="text" placeholder="e.g. changeme123" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} />
               <div className="md:col-span-2">
                 <label className="form-label mb-1">Address</label>
@@ -314,6 +321,8 @@ export default function Employees() {
                 <Input label="Date Joined" type="date" value={form.company_doj} onChange={e => setForm({...form, company_doj: e.target.value})} />
                 <Select label="Status" placeholder="Select status" value={form.is_active} onChange={e => setForm({...form, is_active: parseInt(e.target.value)})}
                   options={[{value:1,label:'Active'},{value:0,label:'Inactive'}]} />
+                <Select label="Role" placeholder="Select role" value={form.type} onChange={e => setForm({...form, type: e.target.value})}
+                  options={[{value:'Staff',label:'Staff'},{value:'Management',label:'Management'}]} />
                 <div className="md:col-span-2">
                   <label className="form-label mb-1">Address</label>
                   <textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})}
@@ -373,6 +382,9 @@ export default function Employees() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={selected.is_active ? 'success' : 'danger'}>{selected.is_active ? 'Active' : 'Inactive'}</Badge>
+                  {selected.user_type === 'Management' && (
+                    <Badge variant="info">Management</Badge>
+                  )}
                 </div>
               </div>
             )}
