@@ -45,6 +45,18 @@ function getUser() {
   } catch { return null }
 }
 
+async function sendLeaveEmail(type, toEmail, data) {
+  try {
+    await fetch(`${EDGE_FUNCTION_URL}/../email-sender`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, to_email: toEmail, data }),
+    })
+  } catch (e) {
+    console.warn('Email send failed (non-blocking):', e)
+  }
+}
+
 const today = () => new Date().toISOString().split('T')[0]
 
 const ROUTES = {
@@ -295,6 +307,31 @@ const ROUTES = {
       entity_id: leave.id,
     })
 
+    // Email all management users about the new leave request
+    try {
+      const mgmtUsers = await supabaseQuery('users', {
+        select: 'email',
+        filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
+      })
+      const leaveType = await supabaseQuery('leave_types', { select: 'title', filters: [{ op: 'eq', col: 'id', val: parseInt(body.leave_type_id) }], single: true })
+      const handoverEmp = body.handover_to ? await supabaseQuery('employees', { select: 'name', filters: [{ op: 'eq', col: 'id', val: parseInt(body.handover_to) }], single: true }) : null
+      const emailData = {
+        employee_name: user.name,
+        leave_type: leaveType?.title || 'Leave',
+        is_half_day: body.is_half_day,
+        start_date: body.start_date,
+        end_date: body.end_date,
+        total_days: total_leave_days,
+        reason: body.leave_reason,
+        handover_name: handoverEmp?.name || null,
+      }
+      for (const m of (mgmtUsers || [])) {
+        if (m.email) sendLeaveEmail('leave_submitted', m.email, emailData)
+      }
+    } catch (e) {
+      console.warn('Failed to send leave submission emails:', e)
+    }
+
     return { data: leave }
   },
 
@@ -339,6 +376,48 @@ const ROUTES = {
       entity_type: 'leave',
       entity_id: parseInt(id),
     })
+
+    // Email the employee about the decision
+    try {
+      const leave = await supabaseQuery('leaves', {
+        select: 'employee_id, leave_type_id, start_date, end_date, total_leave_days, is_half_day',
+        filters: [{ op: 'eq', col: 'id', val: parseInt(id) }],
+        single: true,
+      })
+      if (leave) {
+        const emp = await supabaseQuery('employees', {
+          select: 'user_id, name',
+          filters: [{ op: 'eq', col: 'id', val: leave.employee_id }],
+          single: true,
+        })
+        const empUser = emp?.user_id ? await supabaseQuery('users', {
+          select: 'email',
+          filters: [{ op: 'eq', col: 'id', val: emp.user_id }],
+          single: true,
+        }) : null
+        const leaveType = await supabaseQuery('leave_types', {
+          select: 'title',
+          filters: [{ op: 'eq', col: 'id', val: leave.leave_type_id }],
+          single: true,
+        })
+        if (empUser?.email) {
+          sendLeaveEmail(
+            body.status === 'Approved' ? 'leave_approved' : 'leave_rejected',
+            empUser.email,
+            {
+              leave_type: leaveType?.title || 'Leave',
+              is_half_day: leave.is_half_day,
+              start_date: leave.start_date,
+              end_date: leave.end_date,
+              total_days: leave.total_leave_days,
+              remark: body.remark,
+            }
+          )
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to send leave decision email:', e)
+    }
 
     return { data: { success: true } }
   },
