@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { compare } from "https://deno.land/x/bcrypt@v0.6.3/mod.ts";
+import bcrypt from "npm:bcryptjs@2.4.3";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
 
 const supabase = createClient(
@@ -15,6 +15,10 @@ function normalizeType(type) {
   if (t === "manager" || t === "company") return "Management";
   if (t === "employee") return "Staff";
   return t;
+}
+
+function normalizeHash(storedHash) {
+  return (storedHash || "").replace(/^\$2y\$/, "$2a$");
 }
 
 serve(async (req) => {
@@ -61,10 +65,10 @@ serve(async (req) => {
         });
       }
 
-      const storedHash = (user.password || "").replace(/^\$2y\$/, "$2a$");
+      const storedHash = normalizeHash(user.password);
       let valid = false;
       try {
-        valid = await compare(password, storedHash);
+        valid = bcrypt.compareSync(password, storedHash);
       } catch (e) {
         console.error("bcrypt compare failed:", e);
       }
@@ -82,7 +86,6 @@ serve(async (req) => {
 
       const role = normalizeType(user.type);
 
-      // Build JWT
       const key = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(JWT_SECRET),
@@ -132,14 +135,6 @@ serve(async (req) => {
       }
 
       const tokenStr = authHeader.split(" ")[1];
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(JWT_SECRET),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["verify"]
-      );
-
       const [, payloadB64] = tokenStr.split(".");
       const payload = JSON.parse(atob(payloadB64));
 
@@ -197,9 +192,9 @@ serve(async (req) => {
       }
 
       if (current_password) {
-        const storedHash = (user.password || "").replace(/^\$2y\$/, "$2a$");
+        const storedHash = normalizeHash(user.password);
         let valid = false;
-        try { valid = await compare(current_password, storedHash); } catch { valid = false; }
+        try { valid = bcrypt.compareSync(current_password, storedHash); } catch { valid = false; }
         if (!valid) {
           return new Response(JSON.stringify({ error: "Current password is incorrect" }), {
             status: 401, headers: corsHeaders,
@@ -207,8 +202,7 @@ serve(async (req) => {
         }
       }
 
-      const bcrypt = await import("https://deno.land/x/bcrypt@v0.6.3/mod.ts");
-      const newHash = await bcrypt.hash(new_password);
+      const newHash = bcrypt.hashSync(new_password, 10);
 
       const { error } = await supabase
         .from("users")
@@ -235,8 +229,7 @@ serve(async (req) => {
         });
       }
 
-      const bcrypt = await import("https://deno.land/x/bcrypt@v0.6.3/mod.ts");
-      const newHash = await bcrypt.hash(new_password);
+      const newHash = bcrypt.hashSync(new_password, 10);
 
       const { error } = await supabase
         .from("users")
