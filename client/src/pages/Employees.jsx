@@ -131,7 +131,14 @@ export default function Employees() {
       }
       setForm({})
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to save employee')
+      const msg = err?.response?.data?.error || err?.message || ''
+      if (msg.includes('not-null') || msg.includes('NOT NULL')) {
+        toast.error('Please fill in all required fields (Branch, Department, and Designation are required)')
+      } else if (msg.includes('duplicate') || msg.includes('unique')) {
+        toast.error('An employee with this email or employee ID already exists')
+      } else {
+        toast.error(msg || 'Failed to save employee')
+      }
     } finally {
       setSaving(false)
     }
