@@ -21,10 +21,14 @@ const ACTION_LABELS = {
   leave_deleted: 'Leave Deleted',
   employee_created: 'Employee Created',
   employee_updated: 'Employee Updated',
+  employee_deleted: 'Employee Deleted',
   employee_role_changed: 'Role Changed',
   department_created: 'Department Created',
   department_updated: 'Department Updated',
   department_deleted: 'Department Deleted',
+  branch_created: 'Branch Created',
+  branch_updated: 'Branch Updated',
+  branch_deleted: 'Branch Deleted',
   leave_type_created: 'Leave Type Created',
   leave_type_updated: 'Leave Type Updated',
   leave_type_deleted: 'Leave Type Deleted',
@@ -34,8 +38,9 @@ const ACTION_CATEGORIES = [
   { value: '', label: 'All Actions' },
   { value: 'auth', label: 'Authentication', actions: ['login_success', 'login_failure', 'admin_password_reset'] },
   { value: 'leaves', label: 'Leave Management', actions: ['leave_applied', 'leave_approved', 'leave_rejected', 'leave_cancelled', 'leave_extended', 'leave_deleted'] },
-  { value: 'employees', label: 'Employees', actions: ['employee_created', 'employee_updated', 'employee_role_changed'] },
+  { value: 'employees', label: 'Employees', actions: ['employee_created', 'employee_updated', 'employee_deleted', 'employee_role_changed'] },
   { value: 'departments', label: 'Departments', actions: ['department_created', 'department_updated', 'department_deleted'] },
+  { value: 'branches', label: 'Branches', actions: ['branch_created', 'branch_updated', 'branch_deleted'] },
   { value: 'leave_types', label: 'Leave Types', actions: ['leave_type_created', 'leave_type_updated', 'leave_type_deleted'] },
 ]
 
@@ -398,7 +403,7 @@ export default function AdminLogs() {
                   <tbody>
                     {emailLogs.map((log, i) => (
                       <tr key={log.id} className={`${i !== emailLogs.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                        <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.to_email || '-'}</td>
+                        <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.recipient_email || '-'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '-'}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${

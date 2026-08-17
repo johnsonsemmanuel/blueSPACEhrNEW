@@ -99,6 +99,22 @@ const ROUTES = {
       method: 'POST',
       body: JSON.stringify(body),
     })
+
+    try {
+      const empUser = await supabaseQuery('users', {
+        select: 'email, name',
+        filters: [{ op: 'eq', col: 'id', val: body.user_id }],
+        single: true,
+      })
+      if (empUser?.email) {
+        sendLeaveEmail('password_reset', empUser.email, {
+          employee_name: empUser.name,
+        })
+      }
+    } catch (e) {
+      console.warn('Failed to send password reset email:', e)
+    }
+
     return { data }
   },
 
@@ -441,6 +457,35 @@ const ROUTES = {
       entity_id: parseInt(id),
     })
 
+    try {
+      const mgmtUsers = await supabaseQuery('users', {
+        select: 'email',
+        filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
+      })
+      const leave = await supabaseQuery('leaves', {
+        select: 'leave_type_id, start_date, end_date, total_leave_days',
+        filters: [{ op: 'eq', col: 'id', val: parseInt(id) }],
+        single: true,
+      })
+      const leaveType = leave ? await supabaseQuery('leave_types', {
+        select: 'title',
+        filters: [{ op: 'eq', col: 'id', val: leave.leave_type_id }],
+        single: true,
+      }) : null
+      const emailData = {
+        employee_name: user?.name || 'Employee',
+        leave_type: leaveType?.title || 'Leave',
+        start_date: leave?.start_date || '',
+        end_date: leave?.end_date || '',
+        total_days: leave?.total_leave_days || 0,
+      }
+      for (const m of (mgmtUsers || [])) {
+        if (m.email) sendLeaveEmail('leave_cancelled', m.email, emailData)
+      }
+    } catch (e) {
+      console.warn('Failed to send leave cancellation emails:', e)
+    }
+
     return { data: { success: true } }
   },
 
@@ -589,6 +634,15 @@ const ROUTES = {
       entity_id: emp.id,
     })
 
+    if (body.email && tempPassword) {
+      sendLeaveEmail('employee_created', body.email, {
+        employee_name: body.name,
+        email: body.email,
+        password: tempPassword,
+        employee_id: body.employee_id,
+      })
+    }
+
     return { data: emp }
   },
 
@@ -639,8 +693,21 @@ const ROUTES = {
   },
 
   'DELETE /employees/:id': async (id) => {
+    const user = getUser()
     const { error } = await supabase.from('employees').delete().eq('id', parseInt(id))
     if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'employee_deleted',
+      description: `Employee #${id} permanently deleted`,
+      severity: 'WARNING',
+      entity_type: 'employee',
+      entity_id: parseInt(id),
+    })
+
     return { data: { success: true } }
   },
 
@@ -712,6 +779,77 @@ const ROUTES = {
       description: 'Department deleted',
       severity: 'WARNING',
       entity_type: 'department',
+      entity_id: parseInt(id),
+    })
+
+    return { data: { success: true } }
+  },
+
+  'GET /branches': async () => {
+    const data = await supabaseQuery('branches', {
+      select: '*',
+      order: { col: 'name', asc: true },
+    })
+    return { data: data || [] }
+  },
+
+  'POST /branches': async (body) => {
+    const user = getUser()
+    const { data, error } = await supabase.from('branches').insert({
+      name: body.name,
+      created_by: user?.id || null,
+    }).select('id').single()
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'branch_created',
+      description: `Branch "${body.name}" created`,
+      severity: 'INFO',
+      entity_type: 'branch',
+      entity_id: data.id,
+    })
+
+    return { data: { id: data.id } }
+  },
+
+  'PUT /branches/:id': async (id, body) => {
+    const user = getUser()
+    const { error } = await supabase.from('branches').update({
+      name: body.name,
+      updated_at: new Date().toISOString(),
+    }).eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'branch_updated',
+      description: `Branch "${body.name}" updated`,
+      severity: 'INFO',
+      entity_type: 'branch',
+      entity_id: parseInt(id),
+    })
+
+    return { data: { success: true } }
+  },
+
+  'DELETE /branches/:id': async (id) => {
+    const user = getUser()
+    const { error } = await supabase.from('branches').delete().eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'branch_deleted',
+      description: 'Branch deleted',
+      severity: 'WARNING',
+      entity_type: 'branch',
       entity_id: parseInt(id),
     })
 

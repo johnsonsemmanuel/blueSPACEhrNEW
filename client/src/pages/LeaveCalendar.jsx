@@ -9,11 +9,13 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export default function LeaveCalendar() {
   const [leaves, setLeaves] = useState([])
+  const [holidays, setHolidays] = useState([])
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 
   useEffect(() => {
     api.get('/leaves/calendar').then(r => setLeaves(r.data)).catch(() => {})
+    api.get('/leaves/holidays').then(r => setHolidays(r.data)).catch(() => {})
   }, [])
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
@@ -25,13 +27,19 @@ export default function LeaveCalendar() {
     return dayOfWeek === 0 || dayOfWeek === 6
   }
 
+  const dateStr = (day) => `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
   const getLeavesForDay = (day) => {
     if (isWeekend(day)) return []
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return leaves.filter(l => {
-      const start = l.start_date
-      const end = l.end_date
-      return dateStr >= start && dateStr <= end
+    const ds = dateStr(day)
+    return leaves.filter(l => ds >= l.start_date && ds <= l.end_date)
+  }
+
+  const getHolidaysForDay = (day) => {
+    const ds = dateStr(day)
+    return holidays.filter(h => {
+      const hEnd = h.end_date || h.date
+      return ds >= h.date && ds <= hEnd
     })
   }
 
@@ -53,6 +61,12 @@ export default function LeaveCalendar() {
     }
   }
 
+  const monthHolidays = holidays.filter(h => {
+    const m = new Date(h.date).getMonth()
+    const y = new Date(h.date).getFullYear()
+    return m === currentMonth && y === currentYear
+  })
+
   return (
     <div className="w-full">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
@@ -62,7 +76,7 @@ export default function LeaveCalendar() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-deep-600">Leave Calendar</h1>
-            <p className="text-xs text-gray-500">Overview of approved leaves</p>
+            <p className="text-xs text-gray-500">Overview of approved leaves and holidays</p>
           </div>
         </div>
 
@@ -92,20 +106,27 @@ export default function LeaveCalendar() {
               const day = i + 1
               const weekend = isWeekend(day)
               const dayLeaves = getLeavesForDay(day)
+              const dayHolidays = getHolidaysForDay(day)
               const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear()
+              const isHoliday = dayHolidays.length > 0
               return (
-                <div key={day} className={`min-h-[90px] p-1.5 ${weekend ? 'bg-gray-100' : 'bg-white'} ${isToday && !weekend ? 'ring-2 ring-brand-500 ring-inset' : ''}`}>
+                <div key={day} className={`min-h-[90px] p-1.5 ${weekend ? 'bg-gray-100' : isHoliday ? 'bg-amber-50/50' : 'bg-white'} ${isToday && !weekend ? 'ring-2 ring-brand-500 ring-inset' : ''}`}>
                   <span className={`text-xs font-medium ${isToday && !weekend ? 'text-deep-600' : weekend ? 'text-gray-400' : 'text-gray-600'}`}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-0.5">
-                    {dayLeaves.slice(0, 2).map((l) => (
+                    {isHoliday && dayHolidays.slice(0, 1).map((h) => (
+                      <div key={`h-${h.id}`} className="px-1 py-0.5 rounded bg-amber-100 text-[10px] text-amber-700 font-medium truncate leading-tight">
+                        {h.occasion}
+                      </div>
+                    ))}
+                    {dayLeaves.slice(0, isHoliday ? 1 : 2).map((l) => (
                       <div key={l.id} className="px-1 py-0.5 rounded bg-brand-50 text-[10px] text-brand-700 font-medium truncate leading-tight">
                         {l.title?.split(' ')[0]}
                       </div>
                     ))}
-                    {dayLeaves.length > 2 && (
-                      <div className="text-[10px] text-gray-400 font-medium">+{dayLeaves.length - 2} more</div>
+                    {dayLeaves.length > (isHoliday ? 1 : 2) && (
+                      <div className="text-[10px] text-gray-400 font-medium">+{dayLeaves.length - (isHoliday ? 1 : 2)} more</div>
                     )}
                   </div>
                 </div>
@@ -113,25 +134,43 @@ export default function LeaveCalendar() {
             })}
           </div>
 
-          {leaves.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-gray-100">
-              <h4 className="text-xs font-semibold text-deep-500 uppercase tracking-wider mb-3">Approved Leaves This Month</h4>
-              <div className="space-y-2">
-                {leaves
-                  .filter(l => l.start_date?.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`))
-                  .slice(0, 5)
-                  .map(l => (
-                    <div key={l.id} className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-deep-600">{l.title}</span>
+          <div className="mt-5 pt-4 border-t border-gray-100 space-y-4">
+            {monthHolidays.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-3">Holidays This Month</h4>
+                <div className="space-y-2">
+                  {monthHolidays.map(h => (
+                    <div key={h.id} className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-deep-600">{h.occasion}</span>
                       <span className="text-xs text-gray-500">
-                        {l.start_date} - {l.end_date}
-                        <Badge variant="info" className="ml-2">{l.leave_type}</Badge>
+                        {h.end_date && h.end_date !== h.date ? `${h.date} - ${h.end_date}` : h.date}
                       </span>
                     </div>
                   ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {leaves.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-deep-500 uppercase tracking-wider mb-3">Approved Leaves This Month</h4>
+                <div className="space-y-2">
+                  {leaves
+                    .filter(l => l.start_date?.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`))
+                    .slice(0, 5)
+                    .map(l => (
+                      <div key={l.id} className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-deep-600">{l.title}</span>
+                        <span className="text-xs text-gray-500">
+                          {l.start_date} - {l.end_date}
+                          <Badge variant="info" className="ml-2">{l.leave_type}</Badge>
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
         </Card>
       </motion.div>
     </div>
