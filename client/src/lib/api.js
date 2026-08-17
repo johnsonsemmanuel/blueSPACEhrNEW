@@ -33,7 +33,7 @@ async function supabaseQuery(table, { select = '*', filters = [], order = null, 
     else if (f.op === 'ilike') query = query.ilike(f.col, f.val)
   }
   if (order) query = query.order(order.col, { ascending: order.asc ?? false })
-  if (single) query = query.single()
+  if (single) query = query.maybeSingle()
   const { data, error, count: cnt } = await query
   if (error) throw error
   return single ? data : (count ? { data, count: cnt } : data)
