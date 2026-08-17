@@ -166,19 +166,67 @@ CREATE INDEX idx_leaves_status ON public.leaves (status);
 CREATE INDEX idx_employees_user_id ON public.employees (user_id);
 CREATE INDEX idx_employees_department_id ON public.employees (department_id);
 
--- ===================== ROW LEVEL SECURITY =====================
+-- ===================== FOREIGN KEYS =====================
+-- Required for PostgREST resource embedding (joins via !constraint_name syntax).
 
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.leaves ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.leave_types ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.designations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.branches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.holidays ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments
+  ADD CONSTRAINT departments_branch_id_fkey
+  FOREIGN KEY (branch_id) REFERENCES public.branches(id);
+
+ALTER TABLE public.designations
+  ADD CONSTRAINT fk_designations_branch
+  FOREIGN KEY (branch_id) REFERENCES public.branches(id);
+ALTER TABLE public.designations
+  ADD CONSTRAINT fk_designations_department
+  FOREIGN KEY (department_id) REFERENCES public.departments(id);
+
+ALTER TABLE public.employees
+  ADD CONSTRAINT employees_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES public.users(id);
+ALTER TABLE public.employees
+  ADD CONSTRAINT employees_branch_id_fkey
+  FOREIGN KEY (branch_id) REFERENCES public.branches(id);
+ALTER TABLE public.employees
+  ADD CONSTRAINT employees_department_id_fkey
+  FOREIGN KEY (department_id) REFERENCES public.departments(id);
+ALTER TABLE public.employees
+  ADD CONSTRAINT employees_designation_id_fkey
+  FOREIGN KEY (designation_id) REFERENCES public.designations(id);
+
+ALTER TABLE public.leaves
+  ADD CONSTRAINT leaves_employee_id_fkey
+  FOREIGN KEY (employee_id) REFERENCES public.employees(id);
+ALTER TABLE public.leaves
+  ADD CONSTRAINT leaves_leave_type_id_fkey
+  FOREIGN KEY (leave_type_id) REFERENCES public.leave_types(id);
+ALTER TABLE public.leaves
+  ADD CONSTRAINT leaves_handover_to_fkey
+  FOREIGN KEY (handover_to) REFERENCES public.employees(id);
+
+ALTER TABLE public.notifications
+  ADD CONSTRAINT fk_notifications_user
+  FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE public.audit_logs
+  ADD CONSTRAINT fk_audit_logs_user
+  FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+-- ===================== ROW LEVEL SECURITY =====================
+-- RLS is DISABLED. The api.js layer handles auth via the Edge Function JWT.
+-- The Supabase JS client uses the anon key which has no custom JWT claims,
+-- so RLS policies checking auth.jwt() ->> 'user_role' would block all access.
+
+ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employees DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leaves DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_types DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.designations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.branches DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.holidays DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.email_logs DISABLE ROW LEVEL SECURITY;
 
 -- ===================== RLS POLICIES =====================
 
