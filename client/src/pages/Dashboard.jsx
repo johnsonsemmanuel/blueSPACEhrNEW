@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle } from 'lucide-react'
+import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
@@ -105,6 +105,7 @@ export default function Dashboard() {
       await api.put(`/leaves/${id}/status`, { status: 'Approved' })
       toast.success('Leave approved')
       setAllLeaves(allLeaves.map(l => l.id === id ? { ...l, status: 'Approved' } : l))
+      api.get('/leaves/balance').then(r => setBalance(r.data)).catch(() => {})
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to approve')
     }
@@ -187,12 +188,30 @@ export default function Dashboard() {
       )}
 
       {!isMgmt && balance.length > 0 && (
-        <div className="flex items-center gap-2 mb-4 text-xs text-gray-500 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3">
-          <Calendar size={14} className="text-deep-600" />
-          <span>
-            Total leave days remaining: <strong className="text-deep-600">{totalRemaining}</strong>
-          </span>
-        </div>
+        <>
+          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3">
+            <Calendar size={14} className="text-deep-600" />
+            <span>
+              Total leave days remaining: <strong className="text-deep-600">{totalRemaining}</strong>
+            </span>
+          </div>
+          {balance.filter(b => b.remaining <= 3 && b.remaining > 0).length > 0 && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+              <p className="text-xs text-amber-700">
+                Low balance: {balance.filter(b => b.remaining <= 3 && b.remaining > 0).map(b => `${b.title} (${b.remaining} left)`).join(', ')}
+              </p>
+            </div>
+          )}
+          {balance.filter(b => b.remaining <= 0).length > 0 && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <AlertCircle size={16} className="text-red-600 shrink-0" />
+              <p className="text-xs text-red-700">
+                Exhausted: {balance.filter(b => b.remaining <= 0).map(b => b.title).join(', ')}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {handovers.length > 0 && (
@@ -317,17 +336,18 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 {balance.map((b) => {
                   const pct = b.total > 0 ? (b.used / b.total) * 100 : 0
+                  const barColor = b.remaining <= 0 ? 'bg-red-500' : b.remaining <= 3 ? 'bg-amber-500' : 'bg-brand-600'
                   return (
                     <div key={b.id}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-deep-500">{b.title}</span>
                         <span className="text-xs text-gray-500">
-                          <span className="font-semibold text-deep-600">{b.remaining}</span>/{b.total}
+                          <span className={`font-semibold ${b.remaining <= 0 ? 'text-red-600' : b.remaining <= 3 ? 'text-amber-600' : 'text-deep-600'}`}>{b.remaining}</span>/{b.total}
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-brand-600 rounded-full transition-all duration-500 ease-out-expo"
+                          className={`h-full rounded-full transition-all duration-500 ease-out-expo ${barColor}`}
                           style={{ width: `${Math.min(pct, 100)}%` }}
                         />
                       </div>

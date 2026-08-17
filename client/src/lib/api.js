@@ -375,6 +375,42 @@ const ROUTES = {
 
   'PUT /leaves/:id/status': async (id, body) => {
     const user = getUser()
+
+    if (body.status === 'Approved') {
+      const pendingLeave = await supabaseQuery('leaves', {
+        select: 'employee_id, leave_type_id, total_leave_days, start_date, end_date, is_half_day',
+        filters: [{ op: 'eq', col: 'id', val: parseInt(id) }],
+        single: true,
+      })
+      if (pendingLeave) {
+        const currentYear = new Date().getFullYear()
+        const yearStart = `${currentYear}-01-01`
+        const yearEnd = `${currentYear}-12-31`
+        const existingApproved = await supabaseQuery('leaves', {
+          select: 'total_leave_days',
+          filters: [
+            { op: 'eq', col: 'employee_id', val: pendingLeave.employee_id },
+            { op: 'eq', col: 'leave_type_id', val: pendingLeave.leave_type_id },
+            { op: 'eq', col: 'status', val: 'Approved' },
+            { op: 'gte', col: 'start_date', val: yearStart },
+            { op: 'lte', col: 'end_date', val: yearEnd },
+            { op: 'neq', col: 'id', val: parseInt(id) },
+          ],
+        })
+        const leaveType = await supabaseQuery('leave_types', {
+          select: 'days',
+          filters: [{ op: 'eq', col: 'id', val: pendingLeave.leave_type_id }],
+          single: true,
+        })
+        const used = (existingApproved || []).reduce((sum, l) => sum + (parseFloat(l.total_leave_days) || 0), 0)
+        const requested = parseFloat(pendingLeave.total_leave_days) || 0
+        const available = (leaveType?.days || 0) - used
+        if (requested > available) {
+          throw { response: { data: { error: `Cannot approve: employee has ${available} day(s) remaining but requested ${requested} day(s)` } } }
+        }
+      }
+    }
+
     const { error } = await supabase.from('leaves').update({
       status: body.status,
       remark: body.remark || null,

@@ -123,11 +123,23 @@ export default function ApplyLeave() {
 
         {balance.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {balance.map((b) => (
-              <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${form.leave_type_id == b.id ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-gray-100 text-gray-600'}`}>
-                {b.title}: <strong>{b.remaining}</strong>/{b.total} days
-              </div>
-            ))}
+            {balance.map((b) => {
+              const isSelected = form.leave_type_id == b.id
+              const isExhausted = b.remaining <= 0
+              const isLow = b.remaining > 0 && b.remaining <= 3
+              const chipClass = isSelected
+                ? 'bg-brand-50 border-brand-200 text-brand-700'
+                : isExhausted
+                  ? 'bg-red-50 border-red-200 text-red-600'
+                  : isLow
+                    ? 'bg-amber-50 border-amber-200 text-amber-700'
+                    : 'bg-white border-gray-100 text-gray-600'
+              return (
+                <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${chipClass}`}>
+                  {b.title}: <strong>{b.remaining}</strong>/{b.total} days
+                </div>
+              )
+            })}
           </div>
         )}
 
