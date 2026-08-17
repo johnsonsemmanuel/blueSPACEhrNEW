@@ -519,28 +519,142 @@ const ROUTES = {
       title: body.title,
       days: parseInt(body.days),
       max_consecutive_days: parseInt(body.max_consecutive_days) || parseInt(body.days) || null,
-      requires_approval: body.requires_approval !== undefined ? body.requires_approval : true,
-      allow_carry_forward: body.allow_carry_forward || false,
-      carry_forward_limit: body.carry_forward_limit || 0,
+      requires_approval: body.requires_approval !== undefined ? (body.requires_approval ? 1 : 0) : 1,
+      allow_carry_forward: body.allow_carry_forward ? 1 : 0,
+      carry_forward_limit: body.carry_forward_limit ? parseInt(body.carry_forward_limit) : 0,
       created_by: user?.id || null,
     }).select('id').single()
     if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'leave_type_created',
+      description: `Leave type "${body.title}" created`,
+      severity: 'INFO',
+      entity_type: 'leave_type',
+      entity_id: data.id,
+    })
+
     return { data: { id: data.id } }
   },
 
   'PUT /leave-types/:id': async (id, body) => {
+    const user = getUser()
     const { error } = await supabase.from('leave_types').update({
       title: body.title,
       days: parseInt(body.days),
+      max_consecutive_days: body.max_consecutive_days ? parseInt(body.max_consecutive_days) : null,
+      requires_approval: body.requires_approval ? 1 : 0,
+      allow_carry_forward: body.allow_carry_forward ? 1 : 0,
+      carry_forward_limit: body.carry_forward_limit ? parseInt(body.carry_forward_limit) : 0,
       updated_at: new Date().toISOString(),
     }).eq('id', parseInt(id))
     if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'leave_type_updated',
+      description: `Leave type "${body.title}" updated`,
+      severity: 'INFO',
+      entity_type: 'leave_type',
+      entity_id: parseInt(id),
+    })
+
     return { data: { success: true } }
   },
 
   'DELETE /leave-types/:id': async (id) => {
+    const user = getUser()
     const { error } = await supabase.from('leave_types').delete().eq('id', parseInt(id))
     if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'leave_type_deleted',
+      description: 'Leave type deleted',
+      severity: 'WARNING',
+      entity_type: 'leave_type',
+      entity_id: parseInt(id),
+    })
+
+    return { data: { success: true } }
+  },
+
+  'GET /holidays': async () => {
+    const data = await supabaseQuery('holidays', { select: '*', order: { col: 'date', asc: true } })
+    return { data: data || [] }
+  },
+
+  'POST /holidays': async (body) => {
+    const user = getUser()
+    const { data, error } = await supabase.from('holidays').insert({
+      occasion: body.occasion,
+      date: body.date,
+      end_date: body.end_date || body.date,
+      created_by: user?.id || 0,
+    }).select('id').single()
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'holiday_created',
+      description: `Holiday "${body.occasion}" created`,
+      severity: 'INFO',
+      entity_type: 'holiday',
+      entity_id: data.id,
+    })
+
+    return { data: { id: data.id } }
+  },
+
+  'PUT /holidays/:id': async (id, body) => {
+    const user = getUser()
+    const { error } = await supabase.from('holidays').update({
+      occasion: body.occasion,
+      date: body.date,
+      end_date: body.end_date || body.date,
+      updated_at: new Date().toISOString(),
+    }).eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'holiday_updated',
+      description: `Holiday "${body.occasion}" updated`,
+      severity: 'INFO',
+      entity_type: 'holiday',
+      entity_id: parseInt(id),
+    })
+
+    return { data: { success: true } }
+  },
+
+  'DELETE /holidays/:id': async (id) => {
+    const user = getUser()
+    const { error } = await supabase.from('holidays').delete().eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'holiday_deleted',
+      description: 'Holiday deleted',
+      severity: 'WARNING',
+      entity_type: 'holiday',
+      entity_id: parseInt(id),
+    })
+
     return { data: { success: true } }
   },
 

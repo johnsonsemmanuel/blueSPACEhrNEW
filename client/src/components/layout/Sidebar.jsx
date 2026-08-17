@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2, MoreHorizontal, ScrollText, MapPin } from 'lucide-react'
+import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2, MoreHorizontal, ScrollText, MapPin, CalendarOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = {
@@ -18,6 +18,7 @@ const navItems = {
     { to: '/departments', icon: Building2, label: 'Departments' },
     { to: '/branches', icon: MapPin, label: 'Branches' },
     { to: '/leave-types', icon: Settings, label: 'Leave Types' },
+    { to: '/holidays', icon: CalendarOff, label: 'Holidays' },
     { to: '/admin-logs', icon: ScrollText, label: 'System Logs' },
     { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
     { to: '/profile', icon: User, label: 'Profile' },

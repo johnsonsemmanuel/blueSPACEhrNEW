@@ -29,6 +29,9 @@ const ACTION_LABELS = {
   branch_created: 'Branch Created',
   branch_updated: 'Branch Updated',
   branch_deleted: 'Branch Deleted',
+  holiday_created: 'Holiday Created',
+  holiday_updated: 'Holiday Updated',
+  holiday_deleted: 'Holiday Deleted',
   leave_type_created: 'Leave Type Created',
   leave_type_updated: 'Leave Type Updated',
   leave_type_deleted: 'Leave Type Deleted',
@@ -41,6 +44,7 @@ const ACTION_CATEGORIES = [
   { value: 'employees', label: 'Employees', actions: ['employee_created', 'employee_updated', 'employee_deleted', 'employee_role_changed'] },
   { value: 'departments', label: 'Departments', actions: ['department_created', 'department_updated', 'department_deleted'] },
   { value: 'branches', label: 'Branches', actions: ['branch_created', 'branch_updated', 'branch_deleted'] },
+  { value: 'holidays', label: 'Holidays', actions: ['holiday_created', 'holiday_updated', 'holiday_deleted'] },
   { value: 'leave_types', label: 'Leave Types', actions: ['leave_type_created', 'leave_type_updated', 'leave_type_deleted'] },
 ]
 
