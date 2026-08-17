@@ -71,11 +71,13 @@ export default function LeaveRequests() {
 
   const handleExport = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch('/api/leaves/export', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const blob = await res.blob()
+      const headers = ['Employee', 'Department', 'Type', 'Start Date', 'End Date', 'Days', 'Status', 'Reason']
+      const rows = leaves.map(l => [
+        l.employee_name, l.department_name || '', l.leave_type_name, l.start_date, l.end_date,
+        l.total_leave_days, l.status, l.leave_reason || ''
+      ])
+      const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url; a.download = 'leave-report.csv'; a.click()
