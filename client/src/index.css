@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
   *,
   *::before,
   *::after {
@@ -38,11 +44,35 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer components {
   .card {
     @apply bg-white rounded-lg border border-gray-100 shadow-sm;
+    transition-property: box-shadow;
+    transition-timing-function: var(--ease-out);
+    transition-duration: 200ms;
+  }
+
+  .card-interactive {
+    @apply bg-white rounded-lg border border-gray-100 shadow-sm cursor-pointer;
+    transition-property: box-shadow, border-color;
+    transition-timing-function: var(--ease-out);
+    transition-duration: 200ms;
+  }
+
+  .card-interactive:hover {
+    @apply shadow-md border-gray-200;
   }
 
   .card-header {
@@ -71,6 +101,9 @@
     @apply flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
+    transition-property: border-color, box-shadow;
+    transition-timing-function: var(--ease-out);
+    transition-duration: 150ms;
   }
 
   textarea.form-input {
@@ -81,6 +114,9 @@
     @apply flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base text-deep-600 placeholder:text-gray-400;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
+    transition-property: border-color, box-shadow;
+    transition-timing-function: var(--ease-out);
+    transition-duration: 150ms;
     -webkit-appearance: none;
     appearance: none;
     padding-right: 40px;

@@ -5,16 +5,19 @@ import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
-import Badge from '../components/ui/Badge'
+import Button from '../components/ui/Button'
 import toast from 'react-hot-toast'
 import { statusBadge } from '../components/ui/Badge'
 
-function StatCard({ icon: Icon, label, value, color }) {
+const ease = [0.23, 1, 0.32, 1]
+
+function StatCard({ icon: Icon, label, value, color, delay = 0 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex items-center gap-4"
+      transition={{ duration: 0.4, ease, delay }}
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex items-center gap-4 transition-shadow duration-200 ease-out-expo hover:shadow-md"
     >
       <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
         <Icon size={18} className="text-white" />
@@ -135,7 +138,12 @@ export default function Dashboard() {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between gap-3 mb-6">
-        <div className="min-w-0">
+        <motion.div
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease }}
+          className="min-w-0"
+        >
           <div className="flex items-center gap-2 mb-0.5">
             <GreetIcon size={16} className="text-amber-500 shrink-0" />
             <h1 className="text-base sm:text-lg font-bold text-deep-600 truncate">
@@ -145,15 +153,12 @@ export default function Dashboard() {
           <p className="text-xs text-gray-500 ml-[22px] truncate">
             {isMgmt ? 'Management Dashboard' : 'My Dashboard'}
           </p>
-        </div>
+        </motion.div>
         {!isMgmt && (
-          <button
-            onClick={() => navigate('/apply')}
-            className="h-9 px-3 sm:px-4 bg-brand-600 text-white rounded-md text-xs sm:text-sm font-medium hover:bg-brand-700 transition-colors flex items-center gap-1.5 sm:gap-2 shrink-0"
-          >
+          <Button onClick={() => navigate('/apply')} size="sm" className="shrink-0">
             <CalendarPlus size={15} className="shrink-0" />
             <span className="whitespace-nowrap">Apply Leave</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -175,7 +180,7 @@ export default function Dashboard() {
       {cards.length > 0 && (
         <div className={`grid grid-cols-2 gap-3 mb-6 ${isMgmt ? 'md:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4'}`}>
           {cards.map((card, i) => (
-            <StatCard key={i} {...card} />
+            <StatCard key={i} {...card} delay={i * 0.05} />
           ))}
         </div>
       )}
@@ -320,7 +325,10 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-600 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                        <div
+                          className="h-full bg-brand-600 rounded-full transition-all duration-500 ease-out-expo"
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
                       </div>
                     </div>
                   )
@@ -351,24 +359,26 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="text-deep-600">
                   {pendingLeaves.map((l) => (
-                    <tr key={l.id} className="border-t border-gray-50">
+                    <tr key={l.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
                       <td className="py-3 pr-4 font-medium">{l.employee_name}</td>
                       <td className="py-3 pr-4">{l.leave_type_name}{l.is_half_day ? ' (½)' : ''}</td>
                       <td className="py-3 pr-4 text-gray-500 text-xs">{l.start_date} – {l.end_date}</td>
                       <td className="py-3 pr-4">{l.total_leave_days}</td>
                       <td className="py-3 flex items-center gap-2">
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => handleApprove(l.id)}
-                          className="h-7 px-3 text-[11px] font-medium bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors"
+                          className="!h-7 !px-3 !text-[11px] !bg-emerald-500 hover:!bg-emerald-600 !text-white !border-none"
                         >
                           Approve
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
                           onClick={() => handleReject(l.id)}
-                          className="h-7 px-3 text-[11px] font-medium bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                          className="!h-7 !px-3 !text-[11px] !bg-red-500 hover:!bg-red-600 !text-white !border-none"
                         >
                           Reject
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -407,7 +417,7 @@ export default function Dashboard() {
                   </thead>
                   <tbody className="text-deep-600">
                     {recentLeaves.map((leave) => (
-                      <tr key={leave.id} className="border-t border-gray-50">
+                      <tr key={leave.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
                         {isMgmt && <td className="py-3 pr-4 font-medium">{leave.employee_name}</td>}
                         <td className="py-3 pr-4">{leave.leave_type_name}{leave.is_half_day ? ' (Half Day)' : ''}</td>
                         <td className="py-3 pr-4 text-gray-500 text-xs">{leave.start_date} – {leave.end_date}</td>

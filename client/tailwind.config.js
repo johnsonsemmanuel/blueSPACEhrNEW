@@ -50,15 +50,35 @@ export default {
           900: '#000066',
         },
       },
+      transitionTimingFunction: {
+        'ease-out-expo': 'cubic-bezier(0.23, 1, 0.32, 1)',
+        'ease-in-out-expo': 'cubic-bezier(0.77, 0, 0.175, 1)',
+        'ease-drawer': 'cubic-bezier(0.32, 0.72, 0, 1)',
+      },
+      transitionDuration: {
+        '150': '150ms',
+        '200': '200ms',
+        '250': '250ms',
+      },
     },
     keyframes: {
       'sheet-up': {
         '0%': { transform: 'translateY(100%)' },
         '100%': { transform: 'translateY(0)' },
       },
+      'fade-in': {
+        '0%': { opacity: '0', transform: 'translateY(6px)' },
+        '100%': { opacity: '1', transform: 'translateY(0)' },
+      },
+      'scale-in': {
+        '0%': { opacity: '0', transform: 'scale(0.95)' },
+        '100%': { opacity: '1', transform: 'scale(1)' },
+      },
     },
     animation: {
-      'sheet-up': 'sheet-up 0.25s ease-out',
+      'sheet-up': 'sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1)',
+      'fade-in': 'fade-in 200ms cubic-bezier(0.23, 1, 0.32, 1) forwards',
+      'scale-in': 'scale-in 200ms cubic-bezier(0.23, 1, 0.32, 1) forwards',
     },
   },
   plugins: [],

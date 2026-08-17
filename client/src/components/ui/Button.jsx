@@ -1,5 +1,5 @@
 export default function Button({ children, variant = 'primary', className = '', size = 'md', ...props }) {
-  const base = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+  const base = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all duration-160 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] select-none'
 
   const variants = {
     primary: 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800',

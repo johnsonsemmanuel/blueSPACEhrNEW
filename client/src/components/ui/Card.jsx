@@ -1,6 +1,6 @@
 export default function Card({ children, className = '', padding = true, ...props }) {
   return (
-    <div className={`bg-white rounded-lg border border-gray-100 shadow-sm ${padding ? 'p-5' : ''} ${className}`} {...props}>
+    <div className={`bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-200 ease-out-expo ${padding ? 'p-5' : ''} ${className}`} {...props}>
       {children}
     </div>
   )

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, ArrowRight, Building2, Users, CalendarCheck, Lock, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Building2, Users, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import toast from 'react-hot-toast'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+
+const ease = [0.23, 1, 0.32, 1]
 
 export default function Login() {
   const { login, setUser } = useAuth()
@@ -81,32 +83,51 @@ export default function Login() {
           }} />
         </div>
         <div className="relative z-10 text-center px-12 max-w-md">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
+          <motion.img
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, ease }}
+            src="/logo-white.png"
+            alt="BlueSPACE"
+            className="h-14 w-auto mx-auto mb-6"
+          />
+          <motion.h1
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease, delay: 0.1 }}
+            className="text-3xl font-bold text-white mb-3"
           >
-            <img src="/logo-white.png" alt="BlueSPACE" className="h-14 w-auto mx-auto mb-6" />
-             <h1 className="text-3xl font-bold text-white mb-3">Bluespace Financial Cloud</h1>
-            <p className="text-blue-200 text-sm leading-relaxed">
-              Leave Management System – streamline employee leave requests, approvals, and tracking across the organization.
-            </p>
-          </motion.div>
+            Bluespace Financial Cloud
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease, delay: 0.2 }}
+            className="text-blue-200 text-sm leading-relaxed"
+          >
+            Leave Management System – streamline employee leave requests, approvals, and tracking across the organization.
+          </motion.p>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
+            transition={{ duration: 0.5, ease, delay: 0.5 }}
             className="mt-10 grid grid-cols-3 gap-4"
           >
             {[
               { label: 'Apply', sub: 'Leave requests' },
               { label: 'Track', sub: 'Real-time status' },
               { label: 'Manage', sub: 'Team overview' },
-            ].map((item) => (
-              <div key={item.label} className="bg-white/5 rounded-lg p-3">
+            ].map((item, i) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease, delay: 0.6 + i * 0.08 }}
+                className="bg-white/5 rounded-lg p-3"
+              >
                 <p className="text-white text-sm font-semibold">{item.label}</p>
                 <p className="text-blue-300 text-[10px]">{item.sub}</p>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </div>
@@ -114,18 +135,19 @@ export default function Login() {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
           className="w-full max-w-sm"
         >
           <AnimatePresence mode="wait">
             {forceChange ? (
               <motion.div
                 key="forceChange"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease }}
               >
                 <div className="mb-6 text-center">
                   <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
@@ -153,7 +175,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-0 top-0 h-full flex items-center px-3 text-gray-400 hover:text-deep-500"
+                        className="absolute right-0 top-0 h-full flex items-center px-3 text-gray-400 hover:text-deep-500 transition-colors duration-150 ease-out-expo"
                       >
                         {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -185,9 +207,10 @@ export default function Login() {
             ) : (
               <motion.div
                 key="login"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease }}
               >
                 <div className="mb-8 text-center lg:text-left">
                   <img src="/logo-dark.png" alt="BlueSPACE" className="h-8 w-auto mx-auto lg:hidden mb-4" />
@@ -198,7 +221,7 @@ export default function Login() {
                 <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
                   <button
                     onClick={() => setRole('Staff')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out-expo ${
                       role === 'Staff' ? 'bg-white text-deep-600 shadow-sm' : 'text-gray-500 hover:text-deep-600'
                     }`}
                   >
@@ -207,7 +230,7 @@ export default function Login() {
                   </button>
                   <button
                     onClick={() => setRole('Management')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out-expo ${
                       role === 'Management' ? 'bg-white text-deep-600 shadow-sm' : 'text-gray-500 hover:text-deep-600'
                     }`}
                   >
@@ -241,7 +264,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-0 top-0 h-full flex items-center px-3 text-gray-400 hover:text-deep-500"
+                        className="absolute right-0 top-0 h-full flex items-center px-3 text-gray-400 hover:text-deep-500 transition-colors duration-150 ease-out-expo"
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
