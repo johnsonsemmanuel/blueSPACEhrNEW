@@ -105,7 +105,7 @@ export default function Login() {
             transition={{ duration: 0.5, ease, delay: 0.2 }}
             className="text-blue-200 text-sm leading-relaxed"
           >
-            Leave Management System – streamline employee leave requests, approvals, and tracking across the organization.
+            Leave Management System - streamline employee leave requests, approvals, and tracking across the organization.
           </motion.p>
           <motion.div
             initial={{ opacity: 0 }}

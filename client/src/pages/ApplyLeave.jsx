@@ -257,7 +257,7 @@ export default function ApplyLeave() {
             </div>
             <div>
               <p className="text-sm font-bold text-deep-600">{selectedType?.title || 'Leave'}{form.is_half_day ? ' (Half Day)' : ''}</p>
-              <p className="text-xs text-gray-500">{diffDays} day{diffDays > 1 ? 's' : ''} · {form.start_date} – {form.end_date}</p>
+              <p className="text-xs text-gray-500">{diffDays} day{diffDays > 1 ? 's' : ''} · {form.start_date} - {form.end_date}</p>
             </div>
           </div>
 

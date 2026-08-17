@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 16, 2026 at 01:10 AM
--- Server version: 11.4.10-MariaDB-cll-lve
--- PHP Version: 8.4.21
+-- Generation Time: Aug 17, 2026 at 10:02 AM
+-- Server version: 11.8.8-MariaDB
+-- PHP Version: 8.4.24
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `bihlabsc_bluespacehrr`
+-- Database: `bihlabsc_bluespacehrnew`
 --
 
 -- --------------------------------------------------------
@@ -236,6 +236,27 @@ INSERT INTO `attendance_employees` (`id`, `employee_id`, `date`, `status`, `cloc
 (6, 3, '2025-11-04', 'Present', '10:35:39', '11:10:00', '01:35:39', '06:50:00', '00:00:00', '00:00:00', 6, '2025-11-04 10:35:39', '2025-11-04 11:10:00'),
 (7, 4, '2025-11-06', 'Present', '10:26:30', '00:00:00', '01:26:30', '00:00:00', '00:00:00', '00:00:00', 7, '2025-11-06 15:26:30', '2025-11-06 15:26:30'),
 (8, 3, '2025-11-06', 'Present', '10:56:17', '00:00:00', '01:56:17', '00:00:00', '00:00:00', '00:00:00', 6, '2025-11-06 15:56:17', '2025-11-06 15:56:17');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `audit_logs`
+--
+
+CREATE TABLE `audit_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `user_name` varchar(191) DEFAULT NULL,
+  `user_role` varchar(20) DEFAULT NULL,
+  `action` varchar(50) NOT NULL,
+  `entity_type` varchar(50) DEFAULT NULL,
+  `entity_id` int(11) DEFAULT NULL,
+  `description` text NOT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `ip_address` varchar(45) DEFAULT NULL,
+  `severity` varchar(10) NOT NULL DEFAULT 'INFO',
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1266,7 +1287,8 @@ CREATE TABLE `departments` (
 INSERT INTO `departments` (`id`, `branch_id`, `name`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 1, 'Dev Team', 1, '2025-10-27 09:01:22', '2025-10-27 09:01:22'),
 (2, 1, 'Marketing', 1, '2025-10-27 09:01:43', '2025-10-27 09:01:43'),
-(3, 1, 'Ops', 1, '2025-11-12 15:00:30', '2025-11-12 15:00:30');
+(3, 1, 'Ops', 1, '2025-11-12 15:00:30', '2025-11-12 15:00:30'),
+(4, 1, 'Revenue Ops', 1, '2026-07-08 11:53:20', '2026-07-08 11:53:20');
 
 -- --------------------------------------------------------
 
@@ -1336,6 +1358,21 @@ CREATE TABLE `ducument_uploads` (
   `created_by` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `email_logs`
+--
+
+CREATE TABLE `email_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `to_email` varchar(191) NOT NULL,
+  `subject` varchar(191) NOT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'sent',
+  `error_message` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1868,6 +1905,9 @@ CREATE TABLE `employees` (
   `gender` varchar(191) DEFAULT NULL,
   `phone` varchar(191) DEFAULT NULL,
   `address` varchar(191) DEFAULT NULL,
+  `next_of_kin_name` varchar(191) DEFAULT NULL,
+  `next_of_kin_phone` varchar(191) DEFAULT NULL,
+  `next_of_kin_relationship` varchar(191) DEFAULT NULL,
   `email` varchar(191) DEFAULT NULL,
   `password` varchar(191) DEFAULT NULL,
   `employee_id` varchar(191) NOT NULL DEFAULT '0',
@@ -1896,22 +1936,22 @@ CREATE TABLE `employees` (
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`id`, `user_id`, `name`, `dob`, `gender`, `phone`, `address`, `email`, `password`, `employee_id`, `biometric_emp_id`, `branch_id`, `department_id`, `designation_id`, `company_doj`, `documents`, `account_holder_name`, `account_number`, `bank_name`, `bank_identifier_code`, `branch_location`, `tax_payer_id`, `account`, `salary_type`, `salary`, `is_active`, `created_by`, `created_at`, `updated_at`) VALUES
-(3, 6, 'Emmanuel Johnson-Excellent', NULL, NULL, NULL, NULL, 'emmanuel@bluespaceafrica.com', '$2y$10$.IDkTRsSHyTK104x5oMgD.V5YDu0ZSgHxNTiWiwpSlBid.YYHIU1m', '2', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-10-24 17:55:03', '2025-10-24 17:55:03'),
-(5, 9, 'Samuel Awuku', NULL, NULL, NULL, NULL, 'samuel.awuku@bluespaceafrica.com', '$2y$10$TaH2s8mAT266U1p7ph1mruWUU.lQYf9.XChNHsLGz6Gk6qybgugNe', '4', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-06 15:42:28', '2025-11-06 15:42:28'),
-(6, 10, 'Karikari Adade', NULL, NULL, NULL, NULL, 'karikari@bluespaceafrica.com', '$2y$10$zaBJmEx.CqTTrM2rcP1LJ.y8JzUY5tHKylStX98.REkcoLG4UbCMK', '5', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-06 15:51:10', '2025-11-06 15:51:10'),
-(7, 11, 'Charles Kobina', '1996-11-28', 'Male', '+233242545857', '12 Nii Annan Lane', 'innovation@bluespaceafrica.com', '$2y$10$.Hmjho0DwKx0j4s.8LBm7O0cWfmZJzR/z7V4myYCJ75BX6yXH1h2.', '6', NULL, 1, 3, 11, '2023-06-12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:47:52', '2025-11-13 15:30:28'),
-(8, 12, 'Johnnie Oduro', '1999-01-06', 'Male', '+233200154779', 'Upsa East Legon', 'johnnie@bluespaceafrica.com', '$2y$10$KSnY9l0.I8z5jFXASvdLfeGcIs8L9LvBm9iH7NRGDpIFkf13idmAm', '7', NULL, 1, 1, 5, '2023-07-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:50:18', '2025-11-13 15:28:34'),
-(9, 13, 'Chukwuemeka Ndukwe', '1992-10-25', 'Male', '+233501693352', 'Silver Lane, old Ashogman Accra', 'chukwuemeka@bluespaceafrica.com', '$2y$10$A4cqylOrEiLq8qthr2HSnu6x1trqkya6gRejv/wFDFRjrm0XbAM2O', '8', NULL, 1, 3, 14, '2023-06-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:56:25', '2025-11-13 15:37:37'),
-(10, 14, 'Paul Maen', '1991-08-11', 'Male', '+233593004046', '20 Peacock Street', 'paul@bluespaceafrica.com', '$2y$10$pYSUPoIJE.JSuX3e7.yvyOsTo4tFfNZPPLYwh32FZBeG4No5oVN.O', '9', NULL, 1, 3, 11, '2023-07-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:57:24', '2025-11-13 15:34:31'),
-(11, 15, 'Rita Uyaelumo', '1989-05-25', 'Female', '+233242329323', 'Nii Ago Jj Lane 24', 'rita@bluespaceafrica.com', '$2y$10$J8ifqppHRYaodd4FDR4P7eyoJeosGbtCjXB0y/IkQtd80rDev.rBy', '10', NULL, 1, 1, 6, '2024-08-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:58:22', '2025-11-13 16:04:10'),
-(12, 16, 'Kwame Plahar', NULL, NULL, NULL, NULL, 'kwame@bluespaceafrica.com', '$2y$10$QZAlUUKGqRz6RV/3q2d25eVKzEQfqHRohusvYSt10a6xyjyj28m8a', '11', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:59:22', '2025-11-13 14:59:22'),
-(13, 17, 'Kelvin Abraham', NULL, NULL, NULL, NULL, 'kelvin@bluespaceafrica.com', '$2y$10$aeQkEi1UWTdqn6plMoKEGOiDE84QlmK9KSmhWlfkw8WjnuEonwdwS', '12', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:01:58', '2025-11-13 15:01:58'),
-(14, 18, 'Kenneth Ekow Inkum', '1992-03-26', 'Male', '+233549584088', 'Hse B240/6 Abbosey Okai Road', 'kenneth@bluespaceafrica.com', '$2y$10$ZdPoPpujw6Hz4zG6SwBoDOKdGUeQ01pC0N.EIrIX/.XpRkHUT7z/O', '13', NULL, 1, 1, 2, '2022-08-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:03:21', '2025-11-13 15:44:58'),
-(15, 19, 'Papa Yaw Agyekum Addo', '1997-04-24', 'Male', '+233209550140', 'Sakumono Estates SSnit Flats A1/4, Comm. 13, Tema, Ghana', 'papayaw@bluespaceafrica.com', '$2y$10$kdpBw0V56WOvOgeyivOBgugj72wvrJnk9zFsMBYiPx/N63N1dbXBq', '14', NULL, 1, 3, 14, '2025-02-03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:04:39', '2025-11-13 15:48:42'),
-(16, 20, 'Michael Ahwireng', NULL, NULL, NULL, NULL, 'michaelkofi@bluespaceafrica.com', '$2y$10$rT3n3Zh3xz82DH5pVXtHpefrJ3O97nVGDdkqb5niIsKO3HACY2XlS', '15', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:05:55', '2025-11-13 15:05:55'),
-(17, 21, 'Wendy Obeng', '1997-03-19', 'Female', '+233240215671', 'Ashaley Botwe, GD-0861315', 'info@bluespaceafrica.com', '$2y$10$dG5MHUlhm80Dxgi6fwJvn.F3LyhPKPpB/7qpI/iD6qy4KJARLfYjC', '16', NULL, 1, 2, 15, '2025-03-03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:54:28', '2025-12-16 21:03:06'),
-(18, 22, 'Samuel Amanor', NULL, NULL, NULL, NULL, 'amanor.samuel@bluespaceafrica.com', '$2y$10$/ClaCpvE7yWMKQl13PFpBuRv58Hj3/6vNSSZVN88aa8B1.oI2ZvTe', '17', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-12-02 18:53:31', '2025-12-02 18:53:31');
+INSERT INTO `employees` (`id`, `user_id`, `name`, `dob`, `gender`, `phone`, `address`, `next_of_kin_name`, `next_of_kin_phone`, `next_of_kin_relationship`, `email`, `password`, `employee_id`, `biometric_emp_id`, `branch_id`, `department_id`, `designation_id`, `company_doj`, `documents`, `account_holder_name`, `account_number`, `bank_name`, `bank_identifier_code`, `branch_location`, `tax_payer_id`, `account`, `salary_type`, `salary`, `is_active`, `created_by`, `created_at`, `updated_at`) VALUES
+(3, 6, 'Emmanuel Johnson-Excellent', NULL, NULL, '0242371341', 'Nii Nortey Palm Crescent ', NULL, NULL, NULL, 'emmanuel@bluespaceafrica.com', '$2y$10$.IDkTRsSHyTK104x5oMgD.V5YDu0ZSgHxNTiWiwpSlBid.YYHIU1m', '2', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-10-24 17:55:03', '2025-10-24 17:55:03'),
+(5, 9, 'Samuel Awuku', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'samuel.awuku@bluespaceafrica.com', '$2y$10$TaH2s8mAT266U1p7ph1mruWUU.lQYf9.XChNHsLGz6Gk6qybgugNe', '4', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-06 15:42:28', '2025-11-06 15:42:28'),
+(6, 10, 'Karikari Adade', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'karikari@bluespaceafrica.com', '$2y$10$zaBJmEx.CqTTrM2rcP1LJ.y8JzUY5tHKylStX98.REkcoLG4UbCMK', '5', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-06 15:51:10', '2025-11-06 15:51:10'),
+(7, 11, 'Charles Kobina', '1996-11-28', 'Male', '+233242545857', '12 Nii Annan Lane', NULL, NULL, NULL, 'innovation@bluespaceafrica.com', '$2y$10$.Hmjho0DwKx0j4s.8LBm7O0cWfmZJzR/z7V4myYCJ75BX6yXH1h2.', '6', NULL, 1, 3, 11, '2023-06-12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:47:52', '2025-11-13 15:30:28'),
+(8, 12, 'Johnnie Oduro', '1999-01-06', 'Male', '+233200154779', 'Upsa East Legon', NULL, NULL, NULL, 'johnnie@bluespaceafrica.com', '$2y$10$KSnY9l0.I8z5jFXASvdLfeGcIs8L9LvBm9iH7NRGDpIFkf13idmAm', '7', NULL, 1, 1, 5, '2023-07-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:50:18', '2025-11-13 15:28:34'),
+(9, 13, 'Chukwuemeka Ndukwe', '1992-10-25', 'Male', '+233501693352', 'Silver Lane, old Ashogman Accra', NULL, NULL, NULL, 'chukwuemeka@bluespaceafrica.com', '$2y$10$A4cqylOrEiLq8qthr2HSnu6x1trqkya6gRejv/wFDFRjrm0XbAM2O', '8', NULL, 1, 3, 14, '2023-06-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:56:25', '2025-11-13 15:37:37'),
+(10, 14, 'Paul Maen', '1991-08-11', 'Male', '0546832637', '20 peakcock street\nChristian village, Achimota', NULL, NULL, NULL, 'paul@bluespaceafrica.com', '$2y$10$pYSUPoIJE.JSuX3e7.yvyOsTo4tFfNZPPLYwh32FZBeG4No5oVN.O', '9', NULL, 1, 3, 11, '2023-07-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:57:24', '2025-11-13 15:34:31'),
+(11, 15, 'Rita Uyaelumo', '1989-05-25', 'Female', '+233242329323', 'Nii Ago Jj Lane 24', NULL, NULL, NULL, 'rita@bluespaceafrica.com', '$2y$10$J8ifqppHRYaodd4FDR4P7eyoJeosGbtCjXB0y/IkQtd80rDev.rBy', '10', NULL, 1, 1, 6, '2024-08-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:58:22', '2025-11-13 16:04:10'),
+(12, 16, 'Kwame Plahar', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'kwame@bluespaceafrica.com', '$2y$10$QZAlUUKGqRz6RV/3q2d25eVKzEQfqHRohusvYSt10a6xyjyj28m8a', '11', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 14:59:22', '2025-11-13 14:59:22'),
+(13, 17, 'Kelvin Abraham', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'kelvin@bluespaceafrica.com', '$2y$10$aeQkEi1UWTdqn6plMoKEGOiDE84QlmK9KSmhWlfkw8WjnuEonwdwS', '12', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:01:58', '2025-11-13 15:01:58'),
+(14, 18, 'Kenneth Ekow Inkum', '1992-03-26', 'Male', '+233549584088', 'Hse B240/6 Abbosey Okai Road', NULL, NULL, NULL, 'kenneth@bluespaceafrica.com', '$2y$10$ZdPoPpujw6Hz4zG6SwBoDOKdGUeQ01pC0N.EIrIX/.XpRkHUT7z/O', '13', NULL, 1, 1, 2, '2022-08-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:03:21', '2025-11-13 15:44:58'),
+(15, 19, 'Papa Yaw Agyekum Addo', '1997-04-24', 'Male', '+233209550140', 'Sakumono Estates SSnit Flats A1/4, Comm. 13, Tema, Ghana', NULL, NULL, NULL, 'papayaw@bluespaceafrica.com', '$2y$10$kdpBw0V56WOvOgeyivOBgugj72wvrJnk9zFsMBYiPx/N63N1dbXBq', '14', NULL, 1, 3, 14, '2025-02-03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:04:39', '2025-11-13 15:48:42'),
+(16, 20, 'Michael Ahwireng', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'michaelkofi@bluespaceafrica.com', '$2y$10$rT3n3Zh3xz82DH5pVXtHpefrJ3O97nVGDdkqb5niIsKO3HACY2XlS', '15', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:05:55', '2025-11-13 15:05:55'),
+(17, 21, 'Wendy Obeng', '1997-03-19', 'Female', '+233240215671', 'Ashaley Botwe, GD-0861315', NULL, NULL, NULL, 'info@bluespaceafrica.com', '$2y$10$dG5MHUlhm80Dxgi6fwJvn.F3LyhPKPpB/7qpI/iD6qy4KJARLfYjC', '16', NULL, 1, 2, 15, '2025-03-03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-11-13 15:54:28', '2025-12-16 21:03:06'),
+(18, 22, 'Samuel Amanor', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'amanor.samuel@bluespaceafrica.com', '$2y$10$/ClaCpvE7yWMKQl13PFpBuRv58Hj3/6vNSSZVN88aa8B1.oI2ZvTe', '17', NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '2025-12-02 18:53:31', '2025-12-02 18:53:31');
 
 -- --------------------------------------------------------
 
@@ -2890,22 +2930,32 @@ CREATE TABLE `leaves` (
   `leave_reason` varchar(191) NOT NULL,
   `remark` varchar(191) DEFAULT NULL,
   `status` varchar(191) NOT NULL,
+  `half_day_type` varchar(191) DEFAULT NULL,
+  `attachment` varchar(191) DEFAULT NULL,
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `handover_to` int(11) DEFAULT NULL,
+  `handover_notes` text DEFAULT NULL,
+  `contact_during_leave` varchar(191) DEFAULT NULL,
+  `leave_address` text DEFAULT NULL,
+  `is_half_day` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `leaves`
 --
 
-INSERT INTO `leaves` (`id`, `employee_id`, `leave_type_id`, `applied_on`, `start_date`, `end_date`, `total_leave_days`, `leave_reason`, `remark`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(3, 6, 1, '2025-11-06', '2025-12-01', '2025-12-19', '19', 'I’ve been working continuously throughout the year and would like to take some time off to rest and recharge.\r\n\r\nThis break will allow me to return refreshed and ready to maintain my producti', 'Please let me know if the proposed timing works for operations planning or if any adjustments are needed.', 'Approved', 1, '2025-11-06 16:03:29', '2025-11-06 16:13:03'),
-(4, 5, 1, '2025-11-06', '2025-11-10', '2025-11-14', '5', 'I would like to request a one-week leave to rest and recharge, ensuring I’m mentally and physically prepared for the final stretch of the year’s responsibilities. This short break will help m', 'N/A', 'Approved', 1, '2025-11-06 18:04:39', '2025-11-06 18:40:10'),
-(5, 16, 1, '2025-12-01', '2025-12-02', '2025-12-12', '11', 'I am requesting leave in order to attend to and oversee the funeral and burial arrangements for my late mother.', 'N/a', 'Approved', 1, '2025-12-02 01:00:28', '2025-12-02 18:51:12'),
-(6, 15, 1, '2026-02-16', '2026-02-20', '2026-02-20', '1', 'Travel to Kumasi for Family Event', 'Request for 1 day leave of absence', 'Approved', 1, '2026-02-16 09:41:40', '2026-02-16 12:13:05'),
-(8, 14, 1, '2026-02-27', '2026-03-09', '2026-03-23', '15', 'I\'d like to recoupe and reenergize after working tirelessly without break for a long time.', 'Looking forward to your kind consideration.', 'Approved', 1, '2026-02-27 11:57:05', '2026-03-09 10:13:11'),
-(9, 13, 1, '2026-03-08', '2026-03-09', '2026-03-27', '19', 'The Marriage ceremony will be held in Kumasi 13th , hence the ceremony will be preceeded with final arrangements ; with a two week honeymoon.', 'Emergent', 'Approved', 1, '2026-03-08 14:38:19', '2026-03-09 10:12:17');
+INSERT INTO `leaves` (`id`, `employee_id`, `leave_type_id`, `applied_on`, `start_date`, `end_date`, `total_leave_days`, `leave_reason`, `remark`, `status`, `half_day_type`, `attachment`, `created_by`, `created_at`, `updated_at`, `handover_to`, `handover_notes`, `contact_during_leave`, `leave_address`, `is_half_day`) VALUES
+(3, 6, 1, '2025-11-06', '2025-12-01', '2025-12-19', '19', 'I’ve been working continuously throughout the year and would like to take some time off to rest and recharge.\r\n\r\nThis break will allow me to return refreshed and ready to maintain my producti', 'Please let me know if the proposed timing works for operations planning or if any adjustments are needed.', 'Approved', NULL, NULL, 1, '2025-11-06 16:03:29', '2025-11-06 16:13:03', NULL, NULL, NULL, NULL, 0),
+(4, 5, 1, '2025-11-06', '2025-11-10', '2025-11-14', '5', 'I would like to request a one-week leave to rest and recharge, ensuring I’m mentally and physically prepared for the final stretch of the year’s responsibilities. This short break will help m', 'N/A', 'Approved', NULL, NULL, 1, '2025-11-06 18:04:39', '2025-11-06 18:40:10', NULL, NULL, NULL, NULL, 0),
+(5, 16, 1, '2025-12-01', '2025-12-02', '2025-12-12', '11', 'I am requesting leave in order to attend to and oversee the funeral and burial arrangements for my late mother.', 'N/a', 'Approved', NULL, NULL, 1, '2025-12-02 01:00:28', '2025-12-02 18:51:12', NULL, NULL, NULL, NULL, 0),
+(6, 15, 1, '2026-02-16', '2026-02-20', '2026-02-20', '1', 'Travel to Kumasi for Family Event', 'Request for 1 day leave of absence', 'Approved', NULL, NULL, 1, '2026-02-16 09:41:40', '2026-02-16 12:13:05', NULL, NULL, NULL, NULL, 0),
+(8, 14, 1, '2026-02-27', '2026-03-09', '2026-03-23', '15', 'I\'d like to recoupe and reenergize after working tirelessly without break for a long time.', 'Looking forward to your kind consideration.', 'Approved', NULL, NULL, 1, '2026-02-27 11:57:05', '2026-03-09 10:13:11', NULL, NULL, NULL, NULL, 0),
+(9, 13, 1, '2026-03-08', '2026-03-09', '2026-03-27', '19', 'The Marriage ceremony will be held in Kumasi 13th , hence the ceremony will be preceeded with final arrangements ; with a two week honeymoon.', 'Emergent', 'Approved', NULL, NULL, 1, '2026-03-08 14:38:19', '2026-03-09 10:12:17', NULL, NULL, NULL, NULL, 0),
+(12, 9, 1, '2026-07-06', '2026-07-13', '2026-07-24', '9', 'Annual Leave', '', 'Approved', NULL, NULL, 13, '2026-07-06 19:44:34', '2026-07-08 11:45:55', 11, '', '', '', 0),
+(15, 10, 5, '2026-07-21', '2026-08-10', '2026-08-21', '10', 'Marriage Ceremony ', 'Approved', 'Approved', NULL, NULL, 14, '2026-07-21 13:40:39', '2026-07-21 14:09:01', 7, 'Please contact Charles for all startup and talent related matters', '0546832637', '', 0),
+(16, 10, 1, '2026-07-21', '2026-08-24', '2026-08-28', '5', 'Honeymoon ', 'Congratulations on your Marital Bliss', 'Approved', NULL, NULL, 14, '2026-07-21 13:43:05', '2026-07-21 14:09:40', 7, '', '', '', 0);
 
 -- --------------------------------------------------------
 
@@ -2917,6 +2967,10 @@ CREATE TABLE `leave_types` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `title` varchar(191) NOT NULL,
   `days` int(11) NOT NULL,
+  `max_consecutive_days` int(11) DEFAULT NULL,
+  `requires_approval` tinyint(1) NOT NULL DEFAULT 1,
+  `allow_carry_forward` tinyint(1) NOT NULL DEFAULT 0,
+  `carry_forward_limit` int(11) DEFAULT NULL,
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -2926,12 +2980,12 @@ CREATE TABLE `leave_types` (
 -- Dumping data for table `leave_types`
 --
 
-INSERT INTO `leave_types` (`id`, `title`, `days`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'Annual Leave', 21, 1, '2025-10-27 09:09:51', '2025-11-06 15:35:06'),
-(2, 'Sick Leave', 15, 1, '2025-10-27 09:10:29', '2025-10-27 09:10:29'),
-(4, 'Maternity Leave', 90, 1, '2025-10-27 09:12:26', '2025-10-27 09:12:26'),
-(5, 'Marriage Leave', 10, 1, '2025-10-27 09:13:13', '2025-10-27 09:13:13'),
-(6, 'Bereavement / Compassionate Leave', 7, 1, '2025-10-27 09:13:43', '2025-10-27 09:13:43');
+INSERT INTO `leave_types` (`id`, `title`, `days`, `max_consecutive_days`, `requires_approval`, `allow_carry_forward`, `carry_forward_limit`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'Annual Leave', 21, NULL, 1, 0, NULL, 1, '2025-10-27 09:09:51', '2025-11-06 15:35:06'),
+(2, 'Sick Leave', 10, NULL, 1, 0, NULL, 1, '2025-10-27 09:10:29', '2026-07-08 11:53:41'),
+(4, 'Maternity Leave', 90, NULL, 1, 0, NULL, 1, '2025-10-27 09:12:26', '2025-10-27 09:12:26'),
+(5, 'Marriage Leave', 10, NULL, 1, 0, NULL, 1, '2025-10-27 09:13:13', '2025-10-27 09:13:13'),
+(6, 'Bereavement / Compassionate Leave', 7, NULL, 1, 0, NULL, 1, '2025-10-27 09:13:43', '2025-10-27 09:13:43');
 
 -- --------------------------------------------------------
 
@@ -3328,7 +3382,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (215, '2019_10_25_214038_add_active_status_to_users', 2),
 (216, '2025_10_24_155648_add_talentfactory_fields_to_users_table', 2),
 (217, '2025_10_30_112800_repurpose_clients_to_teams', 3),
-(218, '2025_12_02_143649_add_profile_fields_to_users_table', 4);
+(218, '2025_12_02_143649_add_profile_fields_to_users_table', 4),
+(219, '2026_06_16_102112_add_half_day_type_and_attachment_to_leaves_table', 5),
+(220, '2026_06_16_102948_add_leave_policy_fields_to_leave_types_table', 6);
 
 -- --------------------------------------------------------
 
@@ -3445,6 +3501,35 @@ CREATE TABLE `notifications` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `type`, `data`, `is_read`, `created_at`, `updated_at`) VALUES
+(1, 22, 'leave_submitted', '{\"leaveId\":10,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Marriage Leave\"}', 0, '2026-07-06 19:29:15', '2026-07-06 19:29:15'),
+(2, 13, 'leave_handover', '{\"leaveId\":10,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Marriage Leave\",\"startDate\":\"2026-07-08\",\"endDate\":\"2026-07-16\"}', 0, '2026-07-06 19:29:16', '2026-07-06 19:29:16'),
+(3, 6, 'leave_approved', '{\"leaveId\":\"10\",\"leaveType\":\"Marriage Leave\",\"status\":\"Approved\",\"reviewer\":\"BlueSPACE Africa\"}', 0, '2026-07-06 19:29:51', '2026-07-06 19:29:51'),
+(4, 22, 'leave_submitted', '{\"leaveId\":11,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Marriage Leave\"}', 0, '2026-07-06 19:31:53', '2026-07-06 19:31:53'),
+(5, 6, 'leave_handover', '{\"leaveId\":11,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Marriage Leave\",\"startDate\":\"2026-07-08\",\"endDate\":\"2026-07-16\"}', 0, '2026-07-06 19:31:54', '2026-07-06 19:31:54'),
+(6, 6, 'leave_approved', '{\"leaveId\":\"11\",\"leaveType\":\"Marriage Leave\",\"status\":\"Approved\",\"reviewer\":\"BlueSPACE Africa\"}', 0, '2026-07-06 19:32:12', '2026-07-06 19:32:12'),
+(7, 22, 'leave_submitted', '{\"leaveId\":12,\"employeeName\":\"Chukwuemeka Ndukwe\",\"leaveType\":\"Annual Leave\"}', 0, '2026-07-06 19:44:34', '2026-07-06 19:44:34'),
+(8, 15, 'leave_handover', '{\"leaveId\":12,\"employeeName\":\"Chukwuemeka Ndukwe\",\"leaveType\":\"Annual Leave\",\"startDate\":\"2026-07-13\",\"endDate\":\"2026-07-24\"}', 0, '2026-07-06 19:44:35', '2026-07-06 19:44:35'),
+(9, 22, 'leave_submitted', '{\"leaveId\":13,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Bereavement / Compassionate Leave\"}', 0, '2026-07-07 00:17:04', '2026-07-07 00:17:04'),
+(10, 6, 'leave_handover', '{\"leaveId\":13,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Bereavement / Compassionate Leave\",\"startDate\":\"2026-07-08\",\"endDate\":\"2026-07-11\"}', 0, '2026-07-07 00:17:05', '2026-07-07 00:17:05'),
+(11, 6, 'leave_rejected', '{\"leaveId\":\"13\",\"leaveType\":\"Bereavement / Compassionate Leave\",\"status\":\"Rejected\",\"reviewer\":\"BlueSPACE Africa\"}', 1, '2026-07-07 00:18:34', '2026-07-07 00:18:34'),
+(12, 13, 'leave_approved', '{\"leaveId\":\"12\",\"leaveType\":\"Annual Leave\",\"status\":\"Approved\",\"reviewer\":\"BlueSPACE Africa\"}', 0, '2026-07-08 11:45:55', '2026-07-08 11:45:55'),
+(13, 1, 'leave_submitted', '{\"leaveId\":14,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Annual Leave\"}', 1, '2026-07-21 13:22:22', '2026-07-21 13:22:22'),
+(14, 22, 'leave_submitted', '{\"leaveId\":14,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Annual Leave\"}', 0, '2026-07-21 13:22:25', '2026-07-21 13:22:25'),
+(15, 6, 'leave_handover', '{\"leaveId\":14,\"employeeName\":\"Emmanuel Johnson-Excellent\",\"leaveType\":\"Annual Leave\",\"startDate\":\"2026-07-22\",\"endDate\":\"2026-07-30\"}', 0, '2026-07-21 13:22:29', '2026-07-21 13:22:29'),
+(16, 1, 'leave_submitted', '{\"leaveId\":15,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Marriage Leave\"}', 1, '2026-07-21 13:40:39', '2026-07-21 13:40:39'),
+(17, 22, 'leave_submitted', '{\"leaveId\":15,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Marriage Leave\"}', 0, '2026-07-21 13:40:42', '2026-07-21 13:40:42'),
+(18, 11, 'leave_handover', '{\"leaveId\":15,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Marriage Leave\",\"startDate\":\"2026-08-10\",\"endDate\":\"2026-08-21\"}', 0, '2026-07-21 13:40:45', '2026-07-21 13:40:45'),
+(19, 1, 'leave_submitted', '{\"leaveId\":16,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Annual Leave\"}', 1, '2026-07-21 13:43:05', '2026-07-21 13:43:05'),
+(20, 22, 'leave_submitted', '{\"leaveId\":16,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Annual Leave\"}', 0, '2026-07-21 13:43:08', '2026-07-21 13:43:08'),
+(21, 11, 'leave_handover', '{\"leaveId\":16,\"employeeName\":\"Paul Maen\",\"leaveType\":\"Annual Leave\",\"startDate\":\"2026-08-24\",\"endDate\":\"2026-08-28\"}', 0, '2026-07-21 13:43:10', '2026-07-21 13:43:10'),
+(22, 14, 'leave_approved', '{\"leaveId\":\"15\",\"leaveType\":\"Marriage Leave\",\"status\":\"Approved\",\"reviewer\":\"BlueSPACE Financial Cloud\"}', 1, '2026-07-21 14:09:01', '2026-07-21 14:09:01'),
+(23, 14, 'leave_approved', '{\"leaveId\":\"16\",\"leaveType\":\"Annual Leave\",\"status\":\"Approved\",\"reviewer\":\"BlueSPACE Financial Cloud\"}', 1, '2026-07-21 14:09:40', '2026-07-21 14:09:40');
 
 -- --------------------------------------------------------
 
@@ -6435,31 +6520,32 @@ CREATE TABLE `users` (
   `last_login_at` datetime DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `force_password_change` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `plan`, `plan_expire_date`, `type`, `avatar`, `phone`, `address`, `bio`, `profile_completed`, `profile_completion_reminder_sent`, `messenger_color`, `lang`, `created_by`, `team_leader_id`, `team_type`, `talentfactory_id`, `talentfactory_token`, `default_pipeline`, `active_status`, `delete_status`, `mode`, `dark_mode`, `is_active`, `is_enable_login`, `last_login_at`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'BlueSPACE Africa', 'onyekachi@bluespaceafrica.com', NULL, '$2y$10$uzmC/wpX76JQD7SqzkGJvOf1cz3t7R.ZsvhYjxuLc2kau28bjeABG', 1, NULL, 'company', 'BlueSpace-AFRICA-icon_1762356682.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, 1, 0, 1, 'light', 0, 1, 1, '2026-02-18 00:47:00', 'nFd5GdqjDhq2FuHZ2XsTQuG5kmVzpccnhCGXGPAXZoCaJSB5TLfwyHZL3oDW', '2025-10-24 15:39:47', '2026-02-18 00:47:00'),
-(6, 'Emmanuel Johnson-Excellent', 'emmanuel@bluespaceafrica.com', NULL, '$2y$10$.IDkTRsSHyTK104x5oMgD.V5YDu0ZSgHxNTiWiwpSlBid.YYHIU1m', NULL, NULL, 'Employee', 'IMG_6782_1762479253.jpg', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-11-11 07:57:48', NULL, '2025-10-24 17:55:03', '2025-11-11 12:57:48'),
-(8, 'Emmanuel Johnson-Excellent', 'johnsonsexcellent@gmail.com', NULL, '$2y$10$iqRsMGwYT2bhf2EVwAqz0uXBrdEO0Ikh6Y1PHI1zOclJfOTpxf2kC', NULL, NULL, 'employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, '409', '29|wzqU2kl20P93dcKhMnFVkVNsX5sVnfdCUd1ZuL6d4636e672', NULL, 0, 1, 'light', 0, 1, 1, '2025-11-05 15:52:51', NULL, '2025-11-04 14:24:54', '2025-11-05 20:52:51'),
-(9, 'Samuel Awuku', 'samuel.awuku@bluespaceafrica.com', NULL, '$2y$10$hxPE0BfFVJ3oKjNPJvRH0OMBhzmc.nVuHGYDka5DJBLakIW1FeA8y', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-11-17 09:36:31', NULL, '2025-11-06 15:42:28', '2025-11-17 14:36:31'),
-(10, 'Karikari Adade', 'karikari@bluespaceafrica.com', NULL, '$2y$10$zaBJmEx.CqTTrM2rcP1LJ.y8JzUY5tHKylStX98.REkcoLG4UbCMK', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-11-10 12:09:31', NULL, '2025-11-06 15:51:10', '2025-11-10 17:09:31'),
-(11, 'Charles Kobina', 'innovation@bluespaceafrica.com', NULL, '$2y$10$.Hmjho0DwKx0j4s.8LBm7O0cWfmZJzR/z7V4myYCJ75BX6yXH1h2.', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:47:51', '2025-11-13 14:47:51'),
-(12, 'Johnnie Oduro Jnr', 'johnnie@bluespaceafrica.com', NULL, '$2y$10$EWSRLa0Y87V78wsrxBjbteq./6BszQchLcNFc90g0Gnq5uQBI/bLa', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:41:33', NULL, '2025-11-13 14:50:18', '2025-12-02 18:42:33'),
-(13, 'Chukwuemeka Ndukwe', 'chukwuemeka@bluespaceafrica.com', NULL, '$2y$10$A4cqylOrEiLq8qthr2HSnu6x1trqkya6gRejv/wFDFRjrm0XbAM2O', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:28:05', NULL, '2025-11-13 14:56:25', '2025-12-02 18:28:05'),
-(14, 'Paul Maen', 'paul@bluespaceafrica.com', NULL, '$2y$10$pYSUPoIJE.JSuX3e7.yvyOsTo4tFfNZPPLYwh32FZBeG4No5oVN.O', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:57:24', '2025-11-13 14:57:24'),
-(15, 'Rita Uyaelumo', 'rita@bluespaceafrica.com', NULL, '$2y$10$J8ifqppHRYaodd4FDR4P7eyoJeosGbtCjXB0y/IkQtd80rDev.rBy', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:58:22', '2025-11-13 14:58:22'),
-(16, 'Kwame Plahar', 'kwame@bluespaceafrica.com', NULL, '$2y$10$QZAlUUKGqRz6RV/3q2d25eVKzEQfqHRohusvYSt10a6xyjyj28m8a', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:34:32', NULL, '2025-11-13 14:59:22', '2025-12-02 18:34:32'),
-(17, 'Kelvin Abraham', 'kelvin@bluespaceafrica.com', NULL, '$2y$10$a4Q.IIi/WWp4EUs/JlCA9eHTM.v0Ni3TPci.leJyNbdsjeSZpFi2W', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-01-16 12:38:50', 'gdrnQB0bS8evYaDfrgPUQOy7ffs6nLh9itxaFOAKFb2f7Jvkdf1Q27roMsJW', '2025-11-13 15:01:58', '2026-01-16 17:38:50'),
-(18, 'Kenneth Ekow Inkum', 'kenneth@bluespaceafrica.com', NULL, '$2y$10$ZdPoPpujw6Hz4zG6SwBoDOKdGUeQ01pC0N.EIrIX/.XpRkHUT7z/O', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-03-09 09:51:47', NULL, '2025-11-13 15:03:21', '2026-03-09 09:51:47'),
-(19, 'Papa Yaw Agyekum Addo', 'papayaw@bluespaceafrica.com', NULL, '$2y$10$kdpBw0V56WOvOgeyivOBgugj72wvrJnk9zFsMBYiPx/N63N1dbXBq', NULL, NULL, 'Employee', 'IMG_0320_1765177154.jpeg', '0209550140', NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-02-16 09:39:23', 'iMPT2dsY74RET6j1LZhKO0UNUUn19kNdM9m3FTsFUSnTejlOtzurNF3iA3rm', '2025-11-13 15:04:39', '2026-02-16 09:39:23'),
-(20, 'Michael Ahwireng', 'michaelkofi@bluespaceafrica.com', NULL, '$2y$10$rT3n3Zh3xz82DH5pVXtHpefrJ3O97nVGDdkqb5niIsKO3HACY2XlS', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-01 19:52:19', 'YBg7b4BmFCOusYJZ2mmH5krQLDAT7VozyG28gmv06GDCMkIeXuy6COyA8B6H', '2025-11-13 15:05:55', '2025-12-02 00:52:19'),
-(21, 'Wendy Obeng', 'info@bluespaceafrica.com', NULL, '$2y$10$dG5MHUlhm80Dxgi6fwJvn.F3LyhPKPpB/7qpI/iD6qy4KJARLfYjC', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 15:54:28', '2025-12-16 21:03:06'),
-(22, 'Samuel Amanor', 'amanor.samuel@bluespaceafrica.com', NULL, '$2y$10$/ClaCpvE7yWMKQl13PFpBuRv58Hj3/6vNSSZVN88aa8B1.oI2ZvTe', NULL, NULL, 'Manager', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-12-02 18:53:31', '2025-12-02 18:53:31');
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `plan`, `plan_expire_date`, `type`, `avatar`, `phone`, `address`, `bio`, `profile_completed`, `profile_completion_reminder_sent`, `messenger_color`, `lang`, `created_by`, `team_leader_id`, `team_type`, `talentfactory_id`, `talentfactory_token`, `default_pipeline`, `active_status`, `delete_status`, `mode`, `dark_mode`, `is_active`, `is_enable_login`, `last_login_at`, `remember_token`, `created_at`, `updated_at`, `force_password_change`) VALUES
+(1, 'BlueSPACE Financial Cloud', 'onyekachi@bluespaceafrica.com', NULL, '$2a$10$fkrkcRFRbXaCX5WXRgpGieTdbPFvUALRYLHnT1Apv.rKvHaDNgPdO', 1, NULL, 'company', 'BlueSpace-AFRICA-icon_1762356682.png', '', '', NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, 1, 0, 1, 'light', 0, 1, 1, '2026-06-16 09:48:03', '$2b$10$dxbzJ49uYBh9S5WWNX/fC.wU.LMY/gKcWAzV/yo220ej8ZjjuGkqW', '2025-10-24 15:39:47', '2026-06-16 09:48:03', 0),
+(6, 'Emmanuel Johnson-Excellent', 'emmanuel@bluespaceafrica.com', NULL, '$2a$10$7AySopFb5ivSJ.W11g9CYeOaC3IvftxQ2QtO1ED8ylivRIVJS6VLe', NULL, NULL, 'Employee', 'IMG_6782_1762479253.jpg', '0242371341', 'Nii Nortey Palm Crescent ', NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-06-16 09:35:46', NULL, '2025-10-24 17:55:03', '2026-06-16 09:35:46', 0),
+(8, 'Emmanuel Johnson-Excellent', 'johnsonsexcellent@gmail.com', NULL, '$2y$10$iqRsMGwYT2bhf2EVwAqz0uXBrdEO0Ikh6Y1PHI1zOclJfOTpxf2kC', NULL, NULL, 'employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, '409', '29|wzqU2kl20P93dcKhMnFVkVNsX5sVnfdCUd1ZuL6d4636e672', NULL, 0, 1, 'light', 0, 1, 1, '2025-11-05 15:52:51', NULL, '2025-11-04 14:24:54', '2025-11-05 20:52:51', 0),
+(9, 'Samuel Awuku', 'samuel.awuku@bluespaceafrica.com', NULL, '$2y$10$hxPE0BfFVJ3oKjNPJvRH0OMBhzmc.nVuHGYDka5DJBLakIW1FeA8y', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-11-17 09:36:31', NULL, '2025-11-06 15:42:28', '2025-11-17 14:36:31', 0),
+(10, 'Karikari Adade', 'karikari@bluespaceafrica.com', NULL, '$2y$10$zaBJmEx.CqTTrM2rcP1LJ.y8JzUY5tHKylStX98.REkcoLG4UbCMK', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-11-10 12:09:31', NULL, '2025-11-06 15:51:10', '2025-11-10 17:09:31', 0),
+(11, 'Charles Kobina', 'innovation@bluespaceafrica.com', NULL, '$2y$10$.Hmjho0DwKx0j4s.8LBm7O0cWfmZJzR/z7V4myYCJ75BX6yXH1h2.', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:47:51', '2025-11-13 14:47:51', 0),
+(12, 'Johnnie Oduro Jnr', 'johnnie@bluespaceafrica.com', NULL, '$2y$10$EWSRLa0Y87V78wsrxBjbteq./6BszQchLcNFc90g0Gnq5uQBI/bLa', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:41:33', NULL, '2025-11-13 14:50:18', '2025-12-02 18:42:33', 0),
+(13, 'Chukwuemeka Ndukwe', 'chukwuemeka@bluespaceafrica.com', NULL, '$2a$10$/h9Yht2UvLHFmUUlnNxXn.SRtjZNDnFGp0w2aZXAjPo4fuiky7ECa', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:28:05', NULL, '2025-11-13 14:56:25', '2025-12-02 18:28:05', 0),
+(14, 'Paul Maen', 'paul@bluespaceafrica.com', NULL, '$2a$10$C/4L/1p4AQWCV7wODhxavu0KEfLJ6kmjXdxqGOtkZoy5dEd14/V1i', NULL, NULL, 'Employee', 'avatar.png', '0546832637', '20 peakcock street\nChristian village, Achimota', NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:57:24', '2025-11-13 14:57:24', 1),
+(15, 'Rita Uyaelumo', 'rita@bluespaceafrica.com', NULL, '$2y$10$J8ifqppHRYaodd4FDR4P7eyoJeosGbtCjXB0y/IkQtd80rDev.rBy', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 14:58:22', '2025-11-13 14:58:22', 0),
+(16, 'Kwame Plahar', 'kwame@bluespaceafrica.com', NULL, '$2a$10$uI/EyvDinyfX.LmxHGu3PeijTsfViMvknIx76EF8VfG7rK/sR5cd6', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-02 13:34:32', NULL, '2025-11-13 14:59:22', '2025-12-02 18:34:32', 1),
+(17, 'Kelvin Abraham', 'kelvin@bluespaceafrica.com', NULL, '$2y$10$a4Q.IIi/WWp4EUs/JlCA9eHTM.v0Ni3TPci.leJyNbdsjeSZpFi2W', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-01-16 12:38:50', 'gdrnQB0bS8evYaDfrgPUQOy7ffs6nLh9itxaFOAKFb2f7Jvkdf1Q27roMsJW', '2025-11-13 15:01:58', '2026-01-16 17:38:50', 0),
+(18, 'Kenneth Ekow Inkum', 'kenneth@bluespaceafrica.com', NULL, '$2y$10$ZdPoPpujw6Hz4zG6SwBoDOKdGUeQ01pC0N.EIrIX/.XpRkHUT7z/O', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-03-09 09:51:47', NULL, '2025-11-13 15:03:21', '2026-03-09 09:51:47', 0),
+(19, 'Papa Yaw Agyekum Addo', 'papayaw@bluespaceafrica.com', NULL, '$2y$10$kdpBw0V56WOvOgeyivOBgugj72wvrJnk9zFsMBYiPx/N63N1dbXBq', NULL, NULL, 'Employee', 'IMG_0320_1765177154.jpeg', '0209550140', NULL, NULL, 0, 1, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2026-02-16 09:39:23', 'iMPT2dsY74RET6j1LZhKO0UNUUn19kNdM9m3FTsFUSnTejlOtzurNF3iA3rm', '2025-11-13 15:04:39', '2026-02-16 09:39:23', 0),
+(20, 'Michael Ahwireng', 'michaelkofi@bluespaceafrica.com', NULL, '$2y$10$rT3n3Zh3xz82DH5pVXtHpefrJ3O97nVGDdkqb5niIsKO3HACY2XlS', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, '2025-12-01 19:52:19', 'YBg7b4BmFCOusYJZ2mmH5krQLDAT7VozyG28gmv06GDCMkIeXuy6COyA8B6H', '2025-11-13 15:05:55', '2025-12-02 00:52:19', 0),
+(21, 'Wendy Obeng', 'info@bluespaceafrica.com', NULL, '$2y$10$dG5MHUlhm80Dxgi6fwJvn.F3LyhPKPpB/7qpI/iD6qy4KJARLfYjC', NULL, NULL, 'Employee', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-11-13 15:54:28', '2025-12-16 21:03:06', 0),
+(22, 'Samuel Amanor', 'amanor.samuel@bluespaceafrica.com', NULL, '$2y$10$/ClaCpvE7yWMKQl13PFpBuRv58Hj3/6vNSSZVN88aa8B1.oI2ZvTe', NULL, NULL, 'Manager', 'avatar.png', NULL, NULL, NULL, 0, 0, '#2180f3', 'en', 1, NULL, NULL, NULL, NULL, NULL, 0, 1, 'light', 0, 1, 1, NULL, NULL, '2025-12-02 18:53:31', '2025-12-02 18:53:31', 0);
 
 -- --------------------------------------------------------
 
@@ -6803,6 +6889,15 @@ ALTER TABLE `attendance_employees`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_severity` (`severity`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
 -- Indexes for table `awards`
 --
 ALTER TABLE `awards`
@@ -7110,6 +7205,12 @@ ALTER TABLE `documents`
 -- Indexes for table `ducument_uploads`
 --
 ALTER TABLE `ducument_uploads`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `email_logs`
+--
+ALTER TABLE `email_logs`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -8033,6 +8134,12 @@ ALTER TABLE `attendance_employees`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `awards`
 --
 ALTER TABLE `awards`
@@ -8300,7 +8407,7 @@ ALTER TABLE `deduction_options`
 -- AUTO_INCREMENT for table `departments`
 --
 ALTER TABLE `departments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `designations`
@@ -8318,6 +8425,12 @@ ALTER TABLE `documents`
 -- AUTO_INCREMENT for table `ducument_uploads`
 --
 ALTER TABLE `ducument_uploads`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `email_logs`
+--
+ALTER TABLE `email_logs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -8606,7 +8719,7 @@ ALTER TABLE `lead_stages`
 -- AUTO_INCREMENT for table `leaves`
 --
 ALTER TABLE `leaves`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `leave_types`
@@ -8654,7 +8767,7 @@ ALTER TABLE `meeting_employees`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=219;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=221;
 
 --
 -- AUTO_INCREMENT for table `milestones`
@@ -8672,7 +8785,7 @@ ALTER TABLE `noc_certificates`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `notification_templates`

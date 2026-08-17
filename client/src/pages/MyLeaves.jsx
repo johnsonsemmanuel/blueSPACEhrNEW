@@ -150,10 +150,10 @@ export default function MyLeaves() {
                       <td className="px-5 py-4">{leave.total_leave_days}</td>
                       <td className="px-5 py-4 text-gray-500 max-w-[150px] truncate">{leave.leave_reason}</td>
                       <td className="px-5 py-4 text-gray-500 text-xs max-w-[120px] truncate">
-                        {leave.handover_name || '–'}
+                        {leave.handover_name || '-'}
                       </td>
                       <td className="px-5 py-4">{statusBadge(leave.status)}</td>
-                      <td className="px-5 py-4 text-gray-500 text-xs max-w-[120px] truncate">{leave.remark || '–'}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs max-w-[120px] truncate">{leave.remark || '-'}</td>
                       <td className="px-5 py-4">
                         <div className="flex gap-1.5">
                           <button
@@ -209,7 +209,7 @@ export default function MyLeaves() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-deep-600">{viewing.leave_type_name}{viewing.is_half_day ? ' (Half Day)' : ''}</p>
-                <p className="text-xs text-gray-400">{viewing.total_leave_days} day(s) · {viewing.start_date} – {viewing.end_date}</p>
+                <p className="text-xs text-gray-400">{viewing.total_leave_days} day(s) · {viewing.start_date} - {viewing.end_date}</p>
               </div>
               <div className="ml-auto">{statusBadge(viewing.status)}</div>
             </div>

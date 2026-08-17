@@ -77,9 +77,9 @@ function buildEmail(type, data) {
 }
 
 function buildSubject(type, data) {
-  if (type === "leave_submitted") return `New Leave Request — ${data.employee_name}`;
-  if (type === "leave_approved") return `Leave Approved — ${data.leave_type}`;
-  if (type === "leave_rejected") return `Leave Rejected — ${data.leave_type}`;
+  if (type === "leave_submitted") return `New Leave Request - ${data.employee_name}`;
+  if (type === "leave_approved") return `Leave Approved - ${data.leave_type}`;
+  if (type === "leave_rejected") return `Leave Rejected - ${data.leave_type}`;
   return "HR Notification";
 }
 

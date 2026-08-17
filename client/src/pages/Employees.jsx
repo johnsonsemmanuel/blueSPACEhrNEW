@@ -342,42 +342,42 @@ export default function Employees() {
                   <Phone size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Phone</p>
-                    <p className="font-medium text-deep-600">{selected.phone || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.phone || '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Date of Birth</p>
-                    <p className="font-medium text-deep-600">{selected.dob ? new Date(selected.dob).toLocaleDateString('en-GB') : '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.dob ? new Date(selected.dob).toLocaleDateString('en-GB') : '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <User size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Gender</p>
-                    <p className="font-medium text-deep-600">{selected.gender || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.gender || '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Briefcase size={14} className="text-gray-400 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-gray-500">Department</p>
-                    <p className="font-medium text-deep-600 truncate">{selected.designation_name || '–'}</p>
+                    <p className="font-medium text-deep-600 truncate">{selected.designation_name || '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Branch</p>
-                    <p className="font-medium text-deep-600">{selected.branch_name || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.branch_name || '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={14} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Date Joined</p>
-                    <p className="font-medium text-deep-600">{selected.company_doj ? new Date(selected.company_doj).toLocaleDateString('en-GB') : '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.company_doj ? new Date(selected.company_doj).toLocaleDateString('en-GB') : '-'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -394,7 +394,7 @@ export default function Employees() {
                 <MapPin size={14} className="text-gray-400 mt-0.5 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs text-gray-500">Address</p>
-                  <p className="text-sm font-medium text-deep-600 break-words">{selected.address || '–'}</p>
+                  <p className="text-sm font-medium text-deep-600 break-words">{selected.address || '-'}</p>
                 </div>
               </div>
             )}
@@ -405,15 +405,15 @@ export default function Employees() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-gray-500">Name</p>
-                    <p className="font-medium text-deep-600">{selected.next_of_kin_name || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_name || '-'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Phone</p>
-                    <p className="font-medium text-deep-600">{selected.next_of_kin_phone || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_phone || '-'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Relationship</p>
-                    <p className="font-medium text-deep-600">{selected.next_of_kin_relationship || '–'}</p>
+                    <p className="font-medium text-deep-600">{selected.next_of_kin_relationship || '-'}</p>
                   </div>
                 </div>
               </div>

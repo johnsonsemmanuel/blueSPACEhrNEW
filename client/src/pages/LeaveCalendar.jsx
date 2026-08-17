@@ -124,7 +124,7 @@ export default function LeaveCalendar() {
                     <div key={l.id} className="flex items-center justify-between text-sm">
                       <span className="font-medium text-deep-600">{l.title}</span>
                       <span className="text-xs text-gray-500">
-                        {l.start_date} – {l.end_date}
+                        {l.start_date} - {l.end_date}
                         <Badge variant="info" className="ml-2">{l.leave_type}</Badge>
                       </span>
                     </div>

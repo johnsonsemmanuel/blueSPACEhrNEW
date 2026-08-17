@@ -164,17 +164,17 @@ export default function LeaveRequests() {
                           <p className="text-[11px] text-gray-400">{leave.employee_code}</p>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-gray-500 text-xs">{leave.department_name || '–'}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs">{leave.department_name || '-'}</td>
                       <td className="px-5 py-4 font-medium">
                         {leave.leave_type_name}{leave.is_half_day ? ' (½)' : ''}
                       </td>
                       <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">
-                        {leave.start_date} – {leave.end_date}
+                        {leave.start_date} - {leave.end_date}
                       </td>
                       <td className="px-5 py-4">{leave.total_leave_days}</td>
-                      <td className="px-5 py-4 text-gray-500 text-xs">{leave.handover_name || '–'}</td>
+                      <td className="px-5 py-4 text-gray-500 text-xs">{leave.handover_name || '-'}</td>
                       <td className="px-5 py-4 text-gray-500 text-xs max-w-[180px] truncate">
-                        {leave.leave_reason || '–'}
+                        {leave.leave_reason || '-'}
                       </td>
                       <td className="px-5 py-4">{statusBadge(leave.status)}</td>
                       <td className="px-5 py-4">
@@ -236,7 +236,7 @@ export default function LeaveRequests() {
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-xs text-gray-500">Dates</p>
-                <p className="font-medium text-deep-600">{selected.start_date} – {selected.end_date}</p>
+                <p className="font-medium text-deep-600">{selected.start_date} - {selected.end_date}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Total Days</p>
@@ -332,7 +332,7 @@ export default function LeaveRequests() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Applied On</p>
-                <p className="font-medium text-deep-600">{viewOnly.applied_on ? new Date(viewOnly.applied_on).toLocaleDateString('en-GB') : '–'}</p>
+                <p className="font-medium text-deep-600">{viewOnly.applied_on ? new Date(viewOnly.applied_on).toLocaleDateString('en-GB') : '-'}</p>
               </div>
             </div>
             <div>
@@ -440,8 +440,8 @@ export default function LeaveRequests() {
               <tbody>
                 {emailLogs.map((log, i) => (
                   <tr key={log.id} className={`${i !== emailLogs.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                    <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.recipient_email || '–'}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '–'}</td>
+                    <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.recipient_email || '-'}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '-'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                         log.status === 'sent' ? 'bg-emerald-50 text-emerald-700' :
@@ -451,9 +451,9 @@ export default function LeaveRequests() {
                         {log.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs max-w-[200px] truncate">{log.error_message || '–'}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs max-w-[200px] truncate">{log.error_message || '-'}</td>
                     <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                      {log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '–'}
+                      {log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '-'}
                     </td>
                   </tr>
                 ))}

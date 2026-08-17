@@ -50,7 +50,7 @@ function StatCard({ icon: Icon, label, value, color }) {
         <Icon size={18} className="text-white" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-deep-600">{value ?? '–'}</p>
+        <p className="text-2xl font-bold text-deep-600">{value ?? '-'}</p>
         <p className="text-xs text-gray-500 font-medium">{label}</p>
       </div>
     </motion.div>
@@ -90,7 +90,7 @@ function LogRow({ log, isExpanded, onToggle }) {
         onClick={onToggle}
       >
         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-          {log.created_at ? new Date(log.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '–'}
+          {log.created_at ? new Date(log.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
         </td>
         <td className="px-4 py-3">
           <div>
@@ -143,7 +143,7 @@ function LogRow({ log, isExpanded, onToggle }) {
               )}
               <div>
                 <p className="text-xs text-gray-500 mb-1">Timestamp</p>
-                <p className="text-deep-600">{log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '–'}</p>
+                <p className="text-deep-600">{log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '-'}</p>
               </div>
             </div>
             {meta && (
@@ -398,8 +398,8 @@ export default function AdminLogs() {
                   <tbody>
                     {emailLogs.map((log, i) => (
                       <tr key={log.id} className={`${i !== emailLogs.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                        <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.to_email || '–'}</td>
-                        <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '–'}</td>
+                        <td className="px-4 py-3 text-deep-600 whitespace-nowrap">{log.to_email || '-'}</td>
+                        <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{log.subject || '-'}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                             log.status === 'sent' ? 'bg-emerald-50 text-emerald-700' :
@@ -409,9 +409,9 @@ export default function AdminLogs() {
                             {log.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-400 text-xs max-w-[200px] truncate">{log.error_message || '–'}</td>
+                        <td className="px-4 py-3 text-gray-400 text-xs max-w-[200px] truncate">{log.error_message || '-'}</td>
                         <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                          {log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '–'}
+                          {log.created_at ? new Date(log.created_at).toLocaleString('en-GB') : '-'}
                         </td>
                       </tr>
                     ))}
