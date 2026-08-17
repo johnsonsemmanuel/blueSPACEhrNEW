@@ -270,7 +270,7 @@ export default function Dashboard() {
                         {l.leave_type_name?.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-deep-600">{l.leave_type_name}{l.is_half_day ? ' (½)' : ''}</p>
+                        <p className="text-xs font-medium text-deep-600">{l.leave_type_name}{l.is_half_day ? ` (½${l.half_day_type ? `, ${l.half_day_type === 'morning' ? 'AM' : 'PM'}` : ''})` : ''}</p>
                         <p className="text-[10px] text-gray-500">{l.start_date} - {l.end_date}</p>
                       </div>
                     </div>
@@ -382,7 +382,7 @@ export default function Dashboard() {
                   {pendingLeaves.map((l) => (
                     <tr key={l.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
                       <td className="py-3 pr-4 font-medium">{l.employee_name}</td>
-                      <td className="py-3 pr-4">{l.leave_type_name}{l.is_half_day ? ' (½)' : ''}</td>
+                      <td className="py-3 pr-4">{l.leave_type_name}{l.is_half_day ? ` (½${l.half_day_type ? `, ${l.half_day_type === 'morning' ? 'AM' : 'PM'}` : ''})` : ''}</td>
                       <td className="py-3 pr-4 text-gray-500 text-xs">{l.start_date} - {l.end_date}</td>
                       <td className="py-3 pr-4">{l.total_leave_days}</td>
                       <td className="py-3 flex items-center gap-2">
@@ -440,7 +440,7 @@ export default function Dashboard() {
                     {recentLeaves.map((leave) => (
                       <tr key={leave.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
                         {isMgmt && <td className="py-3 pr-4 font-medium">{leave.employee_name}</td>}
-                        <td className="py-3 pr-4">{leave.leave_type_name}{leave.is_half_day ? ' (Half Day)' : ''}</td>
+                        <td className="py-3 pr-4">{leave.leave_type_name}{leave.is_half_day ? ` (Half Day${leave.half_day_type ? `, ${leave.half_day_type === 'morning' ? 'Morning' : 'Afternoon'}` : ''})` : ''}</td>
                         <td className="py-3 pr-4 text-gray-500 text-xs">{leave.start_date} - {leave.end_date}</td>
                         <td className="py-3 pr-4">{leave.total_leave_days}</td>
                         <td className="py-3">{statusBadge(leave.status)}</td>

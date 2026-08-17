@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CalendarOff, Plus, Edit2, Trash2, Calendar } from 'lucide-react'
+import { CalendarOff, Plus, Edit2, Trash2, Calendar, Mail } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -13,10 +13,23 @@ export default function Holidays() {
   const [modal, setModal] = useState(false)
   const [edit, setEdit] = useState(null)
   const [form, setForm] = useState({ occasion: '', date: '', end_date: '' })
+  const [sendingNotices, setSendingNotices] = useState(false)
 
   useEffect(() => {
     api.get('/holidays').then(r => setHolidays(r.data)).catch(() => {})
   }, [])
+
+  const handleNotifyStaff = async () => {
+    setSendingNotices(true)
+    try {
+      const res = await api.post('/holidays/notify')
+      toast.success(`Holiday notices sent to ${res.data.sent} employee(s)`)
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send holiday notices')
+    } finally {
+      setSendingNotices(false)
+    }
+  }
 
   const openAdd = () => {
     setEdit(null)
@@ -90,10 +103,20 @@ export default function Holidays() {
               <p className="text-xs text-gray-500">{holidays.length} configured holiday{holidays.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
-          <Button onClick={openAdd}>
-            <Plus size={15} />
-            Add Holiday
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleNotifyStaff}
+              disabled={sendingNotices}
+              variant="outline"
+            >
+              <Mail size={15} />
+              {sendingNotices ? 'Sending...' : 'Notify Staff'}
+            </Button>
+            <Button onClick={openAdd}>
+              <Plus size={15} />
+              Add Holiday
+            </Button>
+          </div>
         </div>
 
         {holidays.length === 0 ? (

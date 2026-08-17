@@ -305,7 +305,7 @@ const ROUTES = {
       contact_during_leave: body.contact_during_leave || null,
       leave_address: body.leave_address || null,
       is_half_day: body.is_half_day ? 1 : 0,
-      half_day_type: null,
+      half_day_type: body.is_half_day ? (body.half_day_type || null) : null,
       status: 'Pending',
       created_by: user.id,
     }).select().single()
@@ -335,6 +335,7 @@ const ROUTES = {
         employee_name: user.name,
         leave_type: leaveType?.title || 'Leave',
         is_half_day: body.is_half_day,
+        half_day_type: body.is_half_day ? (body.half_day_type || null) : null,
         start_date: body.start_date,
         end_date: body.end_date,
         total_days: total_leave_days,
@@ -364,7 +365,18 @@ const ROUTES = {
     if (body.handover_notes !== undefined) update.handover_notes = body.handover_notes || null
     if (body.contact_during_leave !== undefined) update.contact_during_leave = body.contact_during_leave || null
     if (body.leave_address !== undefined) update.leave_address = body.leave_address || null
-    if (body.is_half_day !== undefined) update.is_half_day = body.is_half_day ? 1 : 0
+    if (body.is_half_day !== undefined) {
+      update.is_half_day = body.is_half_day ? 1 : 0
+      if (body.is_half_day) {
+        update.total_leave_days = 0.5
+        update.end_date = body.start_date || update.end_date
+        update.half_day_type = body.half_day_type || null
+      } else {
+        update.half_day_type = null
+        if (body.start_date && body.end_date) update.total_leave_days = await countWorkingDays(body.start_date, body.end_date)
+      }
+    }
+    if (body.half_day_type !== undefined && body.is_half_day) update.half_day_type = body.half_day_type || null
     if (body.status) update.status = body.status
     if (body.remark !== undefined) update.remark = body.remark || null
 
@@ -432,7 +444,7 @@ const ROUTES = {
     // Email the employee about the decision
     try {
       const leave = await supabaseQuery('leaves', {
-        select: 'employee_id, leave_type_id, start_date, end_date, total_leave_days, is_half_day',
+        select: 'employee_id, leave_type_id, start_date, end_date, total_leave_days, is_half_day, half_day_type',
         filters: [{ op: 'eq', col: 'id', val: parseInt(id) }],
         single: true,
       })
@@ -459,6 +471,7 @@ const ROUTES = {
             {
               leave_type: leaveType?.title || 'Leave',
               is_half_day: leave.is_half_day,
+              half_day_type: leave.half_day_type,
               start_date: leave.start_date,
               end_date: leave.end_date,
               total_days: leave.total_leave_days,
@@ -692,6 +705,64 @@ const ROUTES = {
     })
 
     return { data: { success: true } }
+  },
+
+  'POST /holidays/notify': async () => {
+    const user = getUser()
+    if (!user) throw { response: { data: { error: 'Not authenticated' } } }
+
+    const employees = await supabaseQuery('employees', {
+      select: 'id, name, email',
+      filters: [{ op: 'eq', col: 'is_active', val: 1 }],
+    })
+
+    const todayStr = today()
+    const holidays = await supabaseQuery('holidays', {
+      select: 'id, occasion, date, end_date',
+      filters: [{ op: 'gte', col: 'date', val: todayStr }],
+      order: { col: 'date', asc: true },
+    })
+
+    if (!holidays || holidays.length === 0) {
+      throw { response: { data: { error: 'No upcoming holidays found' } } }
+    }
+
+    const holidayData = (holidays || []).map((h) => ({
+      occasion: h.occasion,
+      date: h.date,
+      end_date: h.end_date || h.date,
+    }))
+
+    let sentCount = 0
+    let failCount = 0
+
+    for (const emp of (employees || [])) {
+      if (emp.email) {
+        try {
+          await sendLeaveEmail('holiday_reminder', emp.email, {
+            employee_name: emp.name,
+            holidays: holidayData,
+          })
+          sentCount++
+        } catch (e) {
+          failCount++
+          console.warn(`Failed to send holiday reminder to ${emp.email}:`, e)
+        }
+      }
+    }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'holiday_notification_sent',
+      description: `Holiday reminders sent to ${sentCount} employees (${failCount} failed)`,
+      severity: 'INFO',
+      entity_type: 'holiday',
+      entity_id: null,
+    })
+
+    return { data: { sent: sentCount, failed: failCount, total: (employees || []).length } }
   },
 
   'GET /employees': async () => {

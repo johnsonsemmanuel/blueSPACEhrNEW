@@ -30,12 +30,13 @@ function buildEmail(type, data) {
   `;
 
   if (type === "leave_submitted") {
+    const halfDayLabel = data.half_day_type ? ` (${data.half_day_type === 'morning' ? 'Morning' : 'Afternoon'})` : '';
     return `${base}
       <h2 style="font-size: 16px; margin: 0 0 16px;">New Leave Request</h2>
       <p style="font-size: 14px; margin: 0 0 16px;">A new leave request has been submitted and requires your review.</p>
       <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #64748b;">Employee</td><td style="padding: 8px 0; font-weight: 600;">${data.employee_name}</td></tr>
-        <tr><td style="padding: 8px 0; color: #64748b;">Leave Type</td><td style="padding: 8px 0; font-weight: 600;">${data.leave_type}${data.is_half_day ? " (Half Day)" : ""}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b;">Leave Type</td><td style="padding: 8px 0; font-weight: 600;">${data.leave_type}${data.is_half_day ? ` (Half Day${halfDayLabel})` : ""}</td></tr>
         <tr><td style="padding: 8px 0; color: #64748b;">Duration</td><td style="padding: 8px 0; font-weight: 600;">${data.start_date} to ${data.end_date}</td></tr>
         <tr><td style="padding: 8px 0; color: #64748b;">Days</td><td style="padding: 8px 0; font-weight: 600;">${data.total_days}</td></tr>
         <tr><td style="padding: 8px 0; color: #64748b;">Reason</td><td style="padding: 8px 0;">${data.reason || "Not provided"}</td></tr>
@@ -46,11 +47,12 @@ function buildEmail(type, data) {
   }
 
   if (type === "leave_approved") {
+    const halfDayLabel = data.half_day_type ? ` (${data.half_day_type === 'morning' ? 'Morning' : 'Afternoon'})` : '';
     return `${base}
       <h2 style="font-size: 16px; margin: 0 0 16px; color: #059669;">Leave Approved</h2>
       <p style="font-size: 14px; margin: 0 0 16px;">Your leave request has been approved.</p>
       <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #64748b;">Leave Type</td><td style="padding: 8px 0; font-weight: 600;">${data.leave_type}${data.is_half_day ? " (Half Day)" : ""}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b;">Leave Type</td><td style="padding: 8px 0; font-weight: 600;">${data.leave_type}${data.is_half_day ? ` (Half Day${halfDayLabel})` : ""}</td></tr>
         <tr><td style="padding: 8px 0; color: #64748b;">Duration</td><td style="padding: 8px 0; font-weight: 600;">${data.start_date} to ${data.end_date}</td></tr>
         <tr><td style="padding: 8px 0; color: #64748b;">Days</td><td style="padding: 8px 0; font-weight: 600;">${data.total_days}</td></tr>
         ${data.remark ? `<tr><td style="padding: 8px 0; color: #64748b;">Remark</td><td style="padding: 8px 0;">${data.remark}</td></tr>` : ""}
@@ -104,6 +106,24 @@ function buildEmail(type, data) {
     ${footer}`;
   }
 
+  if (type === "holiday_reminder") {
+    const holidayRows = (data.holidays || [])
+      .map(
+        (h) =>
+          `<tr><td style="padding: 8px 0; color: #64748b;">${h.occasion}</td><td style="padding: 8px 0; font-weight: 600;">${h.date}${h.end_date && h.end_date !== h.date ? ' - ' + h.end_date : ''}</td></tr>`
+      )
+      .join("")
+    return `${base}
+      <h2 style="font-size: 16px; margin: 0 0 16px; color: #1a365d;">Upcoming Public Holidays</h2>
+      <p style="font-size: 14px; margin: 0 0 16px;">Hi ${data.employee_name},</p>
+      <p style="font-size: 14px; margin: 0 0 16px;">Please be informed of the upcoming public holidays. The office will be closed on these days:</p>
+      <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+        ${holidayRows}
+      </table>
+      <p style="font-size: 13px; color: #64748b; margin: 20px 0 0;">Plan your work and leave requests accordingly. If you have any questions, contact your manager or HR.</p>
+    ${footer}`;
+  }
+
   if (type === "password_reset") {
     return `${base}
       <h2 style="font-size: 16px; margin: 0 0 16px; color: #d97706;">Password Reset</h2>
@@ -122,6 +142,7 @@ function buildSubject(type, data) {
   if (type === "leave_rejected") return `Leave Rejected - ${data.leave_type}`;
   if (type === "employee_created") return `Welcome to BlueSPACE HR - ${data.employee_name}`;
   if (type === "leave_cancelled") return `Leave Cancelled - ${data.employee_name}`;
+  if (type === "holiday_reminder") return `Upcoming Public Holidays`;
   if (type === "password_reset") return `Password Reset - ${data.employee_name}`;
   return "HR Notification";
 }

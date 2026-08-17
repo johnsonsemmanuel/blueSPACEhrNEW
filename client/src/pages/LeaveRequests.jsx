@@ -166,7 +166,7 @@ export default function LeaveRequests() {
                       </td>
                       <td className="px-5 py-4 text-gray-500 text-xs">{leave.department_name || '-'}</td>
                       <td className="px-5 py-4 font-medium">
-                        {leave.leave_type_name}{leave.is_half_day ? ' (½)' : ''}
+                        {leave.leave_type_name}{leave.is_half_day ? ` (½${leave.half_day_type ? `, ${leave.half_day_type === 'morning' ? 'AM' : 'PM'}` : ''})` : ''}
                       </td>
                       <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">
                         {leave.start_date} - {leave.end_date}
@@ -240,7 +240,7 @@ export default function LeaveRequests() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Total Days</p>
-                <p className="font-medium text-deep-600">{selected.total_leave_days}{selected.is_half_day ? ' (Half Day)' : ''}</p>
+                <p className="font-medium text-deep-600">{selected.total_leave_days}{selected.is_half_day ? ` (Half Day${selected.half_day_type ? `, ${selected.half_day_type === 'morning' ? 'Morning' : 'Afternoon'}` : ''})` : ''}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Handover To</p>
@@ -312,7 +312,7 @@ export default function LeaveRequests() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-xs text-gray-500">Leave Type</p>
-                <p className="font-medium text-deep-600">{viewOnly.leave_type_name}{viewOnly.is_half_day ? ' (Half Day)' : ''}</p>
+                <p className="font-medium text-deep-600">{viewOnly.leave_type_name}{viewOnly.is_half_day ? ` (Half Day${viewOnly.half_day_type ? `, ${viewOnly.half_day_type === 'morning' ? 'Morning' : 'Afternoon'}` : ''})` : ''}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Total Days</p>

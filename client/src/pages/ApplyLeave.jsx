@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarPlus, Send, Phone, MapPin, Users, FileText, Eye, Edit3, CheckCircle } from 'lucide-react'
+import { CalendarPlus, Send, Phone, MapPin, Users, FileText, Eye, Edit3, CheckCircle, Sun, Moon } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
@@ -26,6 +26,7 @@ export default function ApplyLeave() {
     handover_to: '',
     handover_notes: '',
     is_half_day: false,
+    half_day_type: '',
     contact_during_leave: '',
     leave_address: '',
   })
@@ -70,10 +71,39 @@ export default function ApplyLeave() {
 
   const handoverEmp = employees.find(e => e.id === parseInt(form.handover_to))
 
+  const handleHalfDayToggle = (checked) => {
+    if (checked) {
+      setForm(prev => ({
+        ...prev,
+        is_half_day: true,
+        half_day_type: '',
+        end_date: prev.start_date || prev.end_date,
+      }))
+    } else {
+      setForm(prev => ({
+        ...prev,
+        is_half_day: false,
+        half_day_type: '',
+      }))
+    }
+  }
+
+  const handleStartDateChange = (val) => {
+    setForm(prev => ({
+      ...prev,
+      start_date: val,
+      end_date: prev.is_half_day ? val : prev.end_date,
+    }))
+  }
+
   const handlePreview = (e) => {
     e.preventDefault()
     if (!form.leave_type_id || !form.start_date || !form.end_date) {
       toast.error('Please fill all required fields')
+      return
+    }
+    if (form.is_half_day && !form.half_day_type) {
+      toast.error('Please select Morning or Afternoon for your half day')
       return
     }
     if (!form.leave_reason.trim()) {
@@ -84,7 +114,7 @@ export default function ApplyLeave() {
       toast.error('Please select a handover staff')
       return
     }
-    if (new Date(form.end_date) < new Date(form.start_date)) {
+    if (!form.is_half_day && new Date(form.end_date) < new Date(form.start_date)) {
       toast.error('End date must be after start date')
       return
     }
@@ -107,6 +137,8 @@ export default function ApplyLeave() {
       setLoading(false)
     }
   }
+
+  const halfDayLabel = form.half_day_type === 'morning' ? 'Morning' : form.half_day_type === 'afternoon' ? 'Afternoon' : ''
 
   return (
     <div className="w-full">
@@ -158,37 +190,70 @@ export default function ApplyLeave() {
                 label="Start Date *"
                 type="date"
                 value={form.start_date}
-                onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                onChange={(e) => handleStartDateChange(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
               />
               <Input
-                label="End Date *"
+                label={form.is_half_day ? 'Date (locked)' : 'End Date *'}
                 type="date"
                 value={form.end_date}
                 onChange={(e) => setForm({ ...form, end_date: e.target.value })}
                 min={form.start_date || new Date().toISOString().split('T')[0]}
+                disabled={form.is_half_day}
+                className={form.is_half_day ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="half-day"
-                  checked={form.is_half_day}
-                  onChange={(e) => setForm({ ...form, is_half_day: e.target.checked })}
-                  className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
-                />
-                <span className="text-xs font-medium text-deep-500">Half Day</span>
-              </label>
-              {diffDays > 0 && (
-                <span className="text-xs text-deep-600 bg-brand-50 px-3 py-1.5 rounded-md">
-                  <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
-                  {form.is_half_day && <span className="text-gray-500 ml-1">(half day)</span>}
-                  {remainingBalance !== undefined && (
-                    <span className="text-gray-500 ml-2">· {remainingBalance} remaining</span>
-                  )}
-                </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="half-day"
+                    checked={form.is_half_day}
+                    onChange={(e) => handleHalfDayToggle(e.target.checked)}
+                    className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
+                  />
+                  <span className="text-xs font-medium text-deep-500">Half Day</span>
+                </label>
+                {diffDays > 0 && (
+                  <span className="text-xs text-deep-600 bg-brand-50 px-3 py-1.5 rounded-md">
+                    <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
+                    {form.is_half_day && halfDayLabel && <span className="text-gray-500 ml-1">({halfDayLabel})</span>}
+                    {remainingBalance !== undefined && (
+                      <span className="text-gray-500 ml-2">· {remainingBalance} remaining</span>
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {form.is_half_day && (
+                <div className="flex items-center gap-4 pl-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="half_day_type"
+                      value="morning"
+                      checked={form.half_day_type === 'morning'}
+                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                    />
+                    <Sun size={13} className="text-amber-500" />
+                    <span className="text-xs font-medium text-deep-500">Morning</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="half_day_type"
+                      value="afternoon"
+                      checked={form.half_day_type === 'afternoon'}
+                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                    />
+                    <Moon size={13} className="text-blue-500" />
+                    <span className="text-xs font-medium text-deep-500">Afternoon</span>
+                  </label>
+                </div>
               )}
             </div>
 
@@ -268,20 +333,30 @@ export default function ApplyLeave() {
               {selectedType?.title?.charAt(0) || '?'}
             </div>
             <div>
-              <p className="text-sm font-bold text-deep-600">{selectedType?.title || 'Leave'}{form.is_half_day ? ' (Half Day)' : ''}</p>
-              <p className="text-xs text-gray-500">{diffDays} day{diffDays > 1 ? 's' : ''} · {form.start_date} - {form.end_date}</p>
+              <p className="text-sm font-bold text-deep-600">
+                {selectedType?.title || 'Leave'}
+                {form.is_half_day ? ` (Half Day - ${halfDayLabel})` : ''}
+              </p>
+              <p className="text-xs text-gray-500">{diffDays} day{diffDays > 1 ? 's' : ''} · {form.start_date}{!form.is_half_day ? ` - ${form.end_date}` : ''}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-xs text-gray-500">Start Date</p>
+              <p className="text-xs text-gray-500">Date</p>
               <p className="font-medium text-deep-600">{form.start_date}</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">End Date</p>
-              <p className="font-medium text-deep-600">{form.end_date}</p>
-            </div>
+            {form.is_half_day ? (
+              <div>
+                <p className="text-xs text-gray-500">Period</p>
+                <p className="font-medium text-deep-600">{halfDayLabel}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-gray-500">End Date</p>
+                <p className="font-medium text-deep-600">{form.end_date}</p>
+              </div>
+            )}
             <div>
               <p className="text-xs text-gray-500">Total Days</p>
               <p className="font-medium text-deep-600">{diffDays}</p>

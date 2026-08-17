@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CalendarCheck, XCircle, Trash2, Edit3, Eye } from 'lucide-react'
+import { CalendarCheck, XCircle, Trash2, Edit3, Eye, Sun, Moon } from 'lucide-react'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -40,6 +40,7 @@ export default function MyLeaves() {
       handover_to: leave.handover_to || '',
       handover_notes: leave.handover_notes || '',
       is_half_day: leave.is_half_day === 1 || leave.is_half_day === true,
+      half_day_type: leave.half_day_type || '',
       contact_during_leave: leave.contact_during_leave || '',
       leave_address: leave.leave_address || '',
     })
@@ -50,6 +51,10 @@ export default function MyLeaves() {
     e.preventDefault()
     if (!form.leave_type_id || !form.start_date || !form.end_date) {
       toast.error('Please fill all required fields')
+      return
+    }
+    if (form.is_half_day && !form.half_day_type) {
+      toast.error('Please select Morning or Afternoon for your half day')
       return
     }
     setSaving(true)
@@ -143,7 +148,7 @@ export default function MyLeaves() {
                   {filtered.map((leave, i) => (
                     <tr key={leave.id} className={`${i !== filtered.length - 1 ? 'border-b border-gray-50' : ''} hover:bg-gray-50/50 transition-colors duration-150`}>
                       <td className="px-5 py-4 font-medium text-deep-600">
-                        {leave.leave_type_name}{leave.is_half_day ? ' (½)' : ''}
+                        {leave.leave_type_name}{leave.is_half_day ? ` (½${leave.half_day_type ? `, ${leave.half_day_type === 'morning' ? 'AM' : 'PM'}` : ''})` : ''}
                       </td>
                       <td className="px-5 py-4 text-gray-600 whitespace-nowrap">{leave.start_date}</td>
                       <td className="px-5 py-4 text-gray-600 whitespace-nowrap">{leave.end_date}</td>
@@ -208,7 +213,7 @@ export default function MyLeaves() {
                 {viewing.leave_type_name?.charAt(0) || '?'}
               </div>
               <div>
-                <p className="text-sm font-semibold text-deep-600">{viewing.leave_type_name}{viewing.is_half_day ? ' (Half Day)' : ''}</p>
+                <p className="text-sm font-semibold text-deep-600">{viewing.leave_type_name}{viewing.is_half_day ? ` (Half Day${viewing.half_day_type ? `, ${viewing.half_day_type === 'morning' ? 'Morning' : 'Afternoon'}` : ''})` : ''}</p>
                 <p className="text-xs text-gray-400">{viewing.total_leave_days} day(s) · {viewing.start_date} - {viewing.end_date}</p>
               </div>
               <div className="ml-auto">{statusBadge(viewing.status)}</div>
@@ -268,25 +273,72 @@ export default function MyLeaves() {
               label="Start Date *"
               type="date"
               value={form.start_date}
-              onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+              onChange={(e) => {
+                const val = e.target.value
+                setForm(prev => ({
+                  ...prev,
+                  start_date: val,
+                  end_date: prev.is_half_day ? val : prev.end_date,
+                }))
+              }}
             />
             <Input
-              label="End Date *"
+              label={form.is_half_day ? 'Date (locked)' : 'End Date *'}
               type="date"
               value={form.end_date}
               onChange={(e) => setForm({ ...form, end_date: e.target.value })}
               min={form.start_date || undefined}
+              disabled={form.is_half_day}
+              className={form.is_half_day ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}
             />
-            <div className="flex items-center gap-3 pt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.is_half_day}
-                  onChange={(e) => setForm({ ...form, is_half_day: e.target.checked })}
-                  className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
-                />
-                <span className="text-xs font-medium text-deep-500">Half Day</span>
-              </label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_half_day}
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      setForm(prev => ({
+                        ...prev,
+                        is_half_day: checked,
+                        half_day_type: '',
+                        end_date: checked ? prev.start_date : prev.end_date,
+                      }))
+                    }}
+                    className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
+                  />
+                  <span className="text-xs font-medium text-deep-500">Half Day</span>
+                </label>
+              </div>
+              {form.is_half_day && (
+                <div className="flex items-center gap-4 pl-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="half_day_type"
+                      value="morning"
+                      checked={form.half_day_type === 'morning'}
+                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                    />
+                    <Sun size={13} className="text-amber-500" />
+                    <span className="text-xs font-medium text-deep-500">Morning</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="half_day_type"
+                      value="afternoon"
+                      checked={form.half_day_type === 'afternoon'}
+                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                    />
+                    <Moon size={13} className="text-blue-500" />
+                    <span className="text-xs font-medium text-deep-500">Afternoon</span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
