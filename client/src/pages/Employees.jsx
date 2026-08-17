@@ -165,7 +165,7 @@ export default function Employees() {
 
   return (
     <div className="w-full">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
@@ -188,7 +188,7 @@ export default function Employees() {
           {employees.map((emp) => (
             <Card
               key={emp.id}
-              className="hover:shadow-md transition-shadow cursor-pointer"
+              className="hover:shadow-md transition-all duration-200 ease-out-expo cursor-pointer"
               onClick={() => { setSelected(emp); setEditing(false) }}
             >
               <div className="flex items-start gap-3">

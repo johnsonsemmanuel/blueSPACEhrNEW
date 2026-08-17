@@ -65,7 +65,7 @@ export default function Profile() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }} className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <User size={18} className="text-white" />

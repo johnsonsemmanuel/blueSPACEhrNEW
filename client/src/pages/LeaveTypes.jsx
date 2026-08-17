@@ -65,7 +65,7 @@ export default function LeaveTypes() {
 
   return (
     <div className="w-full">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
@@ -97,10 +97,10 @@ export default function LeaveTypes() {
                     <p className="text-xs text-gray-500">{t.days} days per year</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => openEdit(t)} className="p-1.5 text-gray-400 hover:text-deep-600 rounded transition-colors">
+                    <button onClick={() => openEdit(t)} className="p-1.5 text-gray-400 hover:text-deep-600 rounded transition-all duration-150 active:scale-95">
                       <Edit2 size={14} />
                     </button>
-                    <button onClick={() => handleDelete(t.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors">
+                    <button onClick={() => handleDelete(t.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-all duration-150 active:scale-95">
                       <Trash2 size={14} />
                     </button>
                   </div>

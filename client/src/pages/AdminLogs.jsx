@@ -237,7 +237,7 @@ export default function AdminLogs() {
 
   return (
     <div className="w-full">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
@@ -254,16 +254,16 @@ export default function AdminLogs() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setActiveTab('audit')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              activeTab === 'audit' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-out-expo ${
+              activeTab === 'audit' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-[0.97]'
             }`}
           >
             Audit Logs
           </button>
           <button
             onClick={loadEmailLogs}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              activeTab === 'email' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-out-expo ${
+              activeTab === 'email' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-[0.97]'
             }`}
           >
             Email Logs
@@ -319,8 +319,8 @@ export default function AdminLogs() {
                   <button
                     key={cat.value}
                     onClick={() => handleCategoryChange(cat.value)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                      actionCategory === cat.value ? 'bg-deep-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all duration-150 ease-out-expo ${
+                      actionCategory === cat.value ? 'bg-deep-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-[0.97]'
                     }`}
                   >
                     {cat.label}

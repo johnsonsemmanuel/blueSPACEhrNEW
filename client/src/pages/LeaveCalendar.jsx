@@ -55,7 +55,7 @@ export default function LeaveCalendar() {
 
   return (
     <div className="w-full">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
             <CalendarDays size={18} className="text-deep-600" />
@@ -68,11 +68,11 @@ export default function LeaveCalendar() {
 
         <Card>
           <div className="flex items-center justify-between mb-5">
-            <button onClick={prev} className="px-3 py-1.5 text-sm text-gray-600 hover:text-deep-600 hover:bg-gray-100 rounded-md transition-colors">
+            <button onClick={prev} className="px-3 py-1.5 text-sm text-gray-600 hover:text-deep-600 hover:bg-gray-100 rounded-md transition-all duration-150 active:scale-95">
               &larr; {MONTHS[currentMonth === 0 ? 11 : currentMonth - 1]}
             </button>
             <h3 className="text-base font-bold text-deep-600">{MONTHS[currentMonth]} {currentYear}</h3>
-            <button onClick={next} className="px-3 py-1.5 text-sm text-gray-600 hover:text-deep-600 hover:bg-gray-100 rounded-md transition-colors">
+            <button onClick={next} className="px-3 py-1.5 text-sm text-gray-600 hover:text-deep-600 hover:bg-gray-100 rounded-md transition-all duration-150 active:scale-95">
               {MONTHS[currentMonth === 11 ? 0 : currentMonth + 1]} &rarr;
             </button>
           </div>

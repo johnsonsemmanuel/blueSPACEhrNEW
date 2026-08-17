@@ -90,7 +90,7 @@ export default function LeaveRequests() {
 
   return (
     <div className="w-full">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
@@ -124,8 +124,8 @@ export default function LeaveRequests() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filter === f ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-out-expo ${
+                filter === f ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-[0.97]'
               }`}
             >
               {f}
@@ -157,7 +157,7 @@ export default function LeaveRequests() {
                 </thead>
                 <tbody>
                   {filtered.map((leave, i) => (
-                    <tr key={leave.id} className={`${i !== filtered.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                    <tr key={leave.id} className={`${i !== filtered.length - 1 ? 'border-b border-gray-50' : ''} hover:bg-gray-50/50 transition-colors duration-150`}>
                       <td className="px-5 py-4">
                         <div>
                           <p className="font-medium text-deep-600">{leave.employee_name}</p>
@@ -181,7 +181,7 @@ export default function LeaveRequests() {
                         <div className="flex gap-1.5">
                           <button
                             onClick={() => setViewOnly(leave)}
-                            className="p-1.5 rounded bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
+                            className="p-1.5 rounded bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all duration-150 active:scale-95"
                             title="View Details"
                           >
                             <Eye size={15} />
@@ -190,14 +190,14 @@ export default function LeaveRequests() {
                             <>
                               <button
                                 onClick={() => { setSelected(leave); setRemark('') }}
-                                className="p-1.5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                className="p-1.5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-150 active:scale-95"
                                 title="Approve"
                               >
                                 <CheckCircle size={15} />
                               </button>
                               <button
                                 onClick={() => { setSelected(leave); setRemark('') }}
-                                className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-150 active:scale-95"
                                 title="Reject"
                               >
                                 <XCircle size={15} />
@@ -206,14 +206,14 @@ export default function LeaveRequests() {
                           ) : null}
                           <button
                             onClick={() => { setExtendTarget(leave); setExtendDate(leave.end_date); setExtendReason('') }}
-                            className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all duration-150 active:scale-95"
                             title="Extend Leave"
                           >
                             <Clock size={15} />
                           </button>
                           <button
                             onClick={() => handleDelete(leave.id)}
-                            className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                            className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-150 active:scale-95"
                             title="Delete Leave"
                           >
                             <Trash2 size={14} />
