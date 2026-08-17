@@ -713,19 +713,19 @@ const api = {
   post: async (url, body) => {
     const route = matchRoute('POST', url)
     if (!route) throw { response: { data: { error: `Unknown route: POST ${url}` } } }
-    return route.handler(route.params, body)
+    return route.handler(...Object.values(route.params), body)
   },
 
   put: async (url, body) => {
     const route = matchRoute('PUT', url)
     if (!route) throw { response: { data: { error: `Unknown route: PUT ${url}` } } }
-    return route.handler(route.params, body)
+    return route.handler(...Object.values(route.params), body)
   },
 
   delete: async (url) => {
     const route = matchRoute('DELETE', url)
     if (!route) throw { response: { data: { error: `Unknown route: DELETE ${url}` } } }
-    return route.handler(route.params)
+    return route.handler(...Object.values(route.params))
   },
 }
 
