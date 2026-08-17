@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
+import Badge from '../components/ui/Badge'
 import toast from 'react-hot-toast'
 import { statusBadge } from '../components/ui/Badge'
 
