@@ -14,10 +14,12 @@
 -- (never `*`), so narrowing the grant is safe. Note: `select=*` on users now
 -- errors, which is intended.
 --
--- KNOWN GAP (not fixed here): anon still has INSERT/UPDATE/DELETE on users and
--- other tables. That permits account takeover via a direct anon write. Closing
--- it requires either authenticating the client to Postgres or routing all
--- writes through edge functions, plus enabling RLS — deferred to an auth rework.
+-- KNOWN GAP (closed by the REVOKE below): with only column SELECT granted, anon
+-- could still INSERT/UPDATE/DELETE user rows directly (e.g. write a bcrypt hash
+-- of its choosing or create a Management user) -> account takeover. User rows are
+-- now created/updated only through auth-handler, which runs as the service role,
+-- verifies the caller's app JWT, and enforces the user_role claim for Management
+-- operations (see supabase/functions/auth-handler/index.ts).
 
 REVOKE SELECT ON public.users FROM anon, authenticated;
 
@@ -35,3 +37,6 @@ GRANT SELECT (
   created_at,
   updated_at
 ) ON public.users TO anon, authenticated;
+
+-- Close direct writes from the public client.
+REVOKE INSERT, UPDATE, DELETE ON public.users FROM anon, authenticated;

@@ -96,12 +96,11 @@ const ROUTES = {
   'PUT /auth/profile': async (body) => {
     const user = getUser()
     if (!user) throw { response: { data: { error: 'Not authenticated' } } }
-    const { error } = await supabase
-      .from('users')
-      .update({ name: body.name, phone: body.phone, address: body.address, updated_at: new Date().toISOString() })
-      .eq('id', user.id)
-    if (error) throw { response: { data: { error: error.message } } }
-    return { data: { message: 'Profile updated successfully' } }
+    const data = await edgeFetch('/profile', {
+      method: 'PUT',
+      body: JSON.stringify({ name: body.name, phone: body.phone, address: body.address }),
+    })
+    return { data }
   },
 
   'PUT /auth/password': async (body) => {
@@ -949,17 +948,17 @@ const ROUTES = {
   'POST /employees': async (body) => {
     const user = getUser()
     const tempPassword = body.password || 'changeme123'
-    const { data: userData, error: userErr } = await supabase.from('users').insert({
-      name: body.name,
-      email: body.email,
-      password: `$2a$10$placeholder`,
-      type: body.type || 'Staff',
-      phone: body.phone,
-      address: body.address,
-      is_active: body.is_active ?? 1,
-      force_password_change: 1,
-    }).select('id').single()
-    if (userErr) throw { response: { data: { error: userErr.message } } }
+    const userData = await edgeFetch('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: body.name,
+        email: body.email,
+        type: body.type || 'Staff',
+        phone: body.phone,
+        address: body.address,
+        is_active: body.is_active ?? 1,
+      }),
+    })
 
     const { data: emp, error: empErr } = await supabase.from('employees').insert({
       user_id: userData.id,
@@ -1036,7 +1035,12 @@ const ROUTES = {
       if (body.type) userUpdate.type = body.type
       if (body.phone !== undefined) userUpdate.phone = body.phone
       if (body.address !== undefined) userUpdate.address = body.address
-      await supabase.from('users').update(userUpdate).eq('id', emp.user_id)
+      if (Object.keys(userUpdate).length > 0) {
+        await edgeFetch(`/admin/users/${emp.user_id}`, {
+          method: 'PUT',
+          body: JSON.stringify(userUpdate),
+        })
+      }
     }
 
     await supabase.from('audit_logs').insert({
@@ -1279,7 +1283,7 @@ const ROUTES = {
     return { data: ann }
   },
 
-  'GET /audit-logs': async (params) => {
+  'GET /audit-logs': async () => {
     const data = await supabaseQuery('audit_logs', { select: '*', order: { col: 'created_at', asc: false } })
     return { data: data || [] }
   },
