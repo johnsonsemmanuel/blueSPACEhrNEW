@@ -68,6 +68,15 @@ async function sendLeaveEmail(type, toEmail, data) {
   }
 }
 
+// In-app notifications for the header bell. Best-effort: failures are logged,
+// never thrown, so they can't break the leave action itself.
+async function insertNotifications(rows) {
+  const clean = (rows || []).filter((r) => r && r.user_id)
+  if (clean.length === 0) return
+  const { error } = await supabase.from('notifications').insert(clean)
+  if (error) console.warn('Failed to insert notifications:', error.message)
+}
+
 const today = () => new Date().toISOString().split('T')[0]
 
 const ROUTES = {
@@ -377,11 +386,11 @@ const ROUTES = {
     // Email all management users about the new leave request
     try {
       const mgmtUsers = await supabaseQuery('users', {
-        select: 'email, name',
+        select: 'id, email, name',
         filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
       })
       const leaveType = await supabaseQuery('leave_types', { select: 'title', filters: [{ op: 'eq', col: 'id', val: parseInt(body.leave_type_id) }], single: true })
-      const handoverEmp = body.handover_to ? await supabaseQuery('employees', { select: 'name', filters: [{ op: 'eq', col: 'id', val: parseInt(body.handover_to) }], single: true }) : null
+      const handoverEmp = body.handover_to ? await supabaseQuery('employees', { select: 'id, name, user_id', filters: [{ op: 'eq', col: 'id', val: parseInt(body.handover_to) }], single: true }) : null
       const emailData = {
         employee_name: user.name,
         leave_type: leaveType?.title || 'Leave',
@@ -396,6 +405,18 @@ const ROUTES = {
       for (const m of (mgmtUsers || [])) {
         if (m.email) sendLeaveEmail('leave_submitted', m.email, { ...emailData, recipient_name: m.name })
       }
+      await insertNotifications([
+        ...(mgmtUsers || []).map((m) => ({
+          user_id: m.id,
+          type: 'leave_submitted',
+          data: JSON.stringify({ employeeName: user.name, leaveType: emailData.leave_type }),
+        })),
+        ...(handoverEmp?.user_id ? [{
+          user_id: handoverEmp.user_id,
+          type: 'leave_handover',
+          data: JSON.stringify({ employeeName: user.name, leaveType: emailData.leave_type }),
+        }] : []),
+      ])
     } catch (e) {
       console.warn('Failed to send leave submission emails:', e)
     }
@@ -455,7 +476,7 @@ const ROUTES = {
           single: true,
         })
         const empUser = emp?.user_id ? await supabaseQuery('users', {
-          select: 'email, name',
+          select: 'id, email, name',
           filters: [{ op: 'eq', col: 'id', val: emp.user_id }],
           single: true,
         }) : null
@@ -474,6 +495,13 @@ const ROUTES = {
             new_end_date: body.end_date,
             total_days: totalDays,
           })
+        }
+        if (empUser?.id) {
+          await insertNotifications([{
+            user_id: empUser.id,
+            type: 'leave_extended',
+            data: JSON.stringify({ leaveType: leaveType?.title || 'Leave', reviewer: user.name }),
+          }])
         }
       } catch (e) {
         console.warn('Failed to send leave extension email:', e)
@@ -553,7 +581,7 @@ const ROUTES = {
           single: true,
         })
         const empUser = emp?.user_id ? await supabaseQuery('users', {
-          select: 'email, name',
+          select: 'id, email, name',
           filters: [{ op: 'eq', col: 'id', val: emp.user_id }],
           single: true,
         }) : null
@@ -577,6 +605,13 @@ const ROUTES = {
               remark: body.remark,
             }
           )
+        }
+        if (empUser?.id) {
+          await insertNotifications([{
+            user_id: empUser.id,
+            type: body.status === 'Approved' ? 'leave_approved' : 'leave_rejected',
+            data: JSON.stringify({ leaveType: leaveType?.title || 'Leave', reviewer: user?.name || 'Management' }),
+          }])
         }
       }
     } catch (e) {
@@ -607,7 +642,7 @@ const ROUTES = {
 
     try {
       const mgmtUsers = await supabaseQuery('users', {
-        select: 'email, name',
+        select: 'id, email, name',
         filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
       })
       const leave = await supabaseQuery('leaves', {
@@ -630,6 +665,11 @@ const ROUTES = {
       for (const m of (mgmtUsers || [])) {
         if (m.email) sendLeaveEmail('leave_cancelled', m.email, { ...emailData, recipient_name: m.name })
       }
+      await insertNotifications((mgmtUsers || []).map((m) => ({
+        user_id: m.id,
+        type: 'leave_cancelled',
+        data: JSON.stringify({ employeeName: emailData.employee_name, leaveType: emailData.leave_type }),
+      })))
     } catch (e) {
       console.warn('Failed to send leave cancellation emails:', e)
     }
