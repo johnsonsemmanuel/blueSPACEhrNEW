@@ -9,4 +9,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
 
-export const EDGE_FUNCTION_URL = `${supabaseUrl}/functions/v1/auth-handler`
+export const SUPABASE_ANON_KEY = supabaseAnonKey || ''
+export const EDGE_FUNCTIONS_BASE = `${supabaseUrl}/functions/v1`
+export const EDGE_FUNCTION_URL = `${EDGE_FUNCTIONS_BASE}/auth-handler`

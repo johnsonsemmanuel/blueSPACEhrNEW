@@ -1,4 +1,4 @@
-import { supabase, EDGE_FUNCTION_URL } from './supabase'
+import { supabase, EDGE_FUNCTION_URL, EDGE_FUNCTIONS_BASE, SUPABASE_ANON_KEY } from './supabase'
 
 function getToken() {
   return localStorage.getItem('token')
@@ -47,13 +47,24 @@ function getUser() {
 
 async function sendLeaveEmail(type, toEmail, data) {
   try {
-    await fetch(`${EDGE_FUNCTION_URL}/../email-sender`, {
+    const res = await fetch(`${EDGE_FUNCTIONS_BASE}/email-sender`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
       body: JSON.stringify({ type, to_email: toEmail, data }),
     })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      console.warn(`Email send failed (${res.status}) for ${type} -> ${toEmail}: ${detail}`)
+      return false
+    }
+    return true
   } catch (e) {
     console.warn('Email send failed (non-blocking):', e)
+    return false
   }
 }
 
@@ -283,6 +294,46 @@ const ROUTES = {
     return { data: data || [] }
   },
 
+  'GET /leaves/notifications': async () => {
+    const user = getUser()
+    if (!user) return { data: { notifications: [], unread: 0 } }
+    const rows = await supabaseQuery('notifications', {
+      select: '*',
+      filters: [{ op: 'eq', col: 'user_id', val: user.id }],
+      order: { col: 'created_at', asc: false },
+    })
+    const list = rows || []
+    return {
+      data: {
+        notifications: list.slice(0, 20),
+        unread: list.filter(n => !n.is_read).length,
+      },
+    }
+  },
+
+  'PUT /leaves/notifications/read-all': async () => {
+    const user = getUser()
+    if (!user) throw { response: { data: { error: 'Not authenticated' } } }
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: 1 })
+      .eq('user_id', user.id)
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data: { message: 'All notifications marked as read' } }
+  },
+
+  'PUT /leaves/notifications/:id/read': async (id) => {
+    const user = getUser()
+    if (!user) throw { response: { data: { error: 'Not authenticated' } } }
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: 1 })
+      .eq('id', parseInt(id))
+      .eq('user_id', user.id)
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data: { message: 'Notification marked as read' } }
+  },
+
   'POST /leaves': async (body) => {
     const user = getUser()
     if (!user) throw { response: { data: { error: 'Not authenticated' } } }
@@ -326,7 +377,7 @@ const ROUTES = {
     // Email all management users about the new leave request
     try {
       const mgmtUsers = await supabaseQuery('users', {
-        select: 'email',
+        select: 'email, name',
         filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
       })
       const leaveType = await supabaseQuery('leave_types', { select: 'title', filters: [{ op: 'eq', col: 'id', val: parseInt(body.leave_type_id) }], single: true })
@@ -343,7 +394,7 @@ const ROUTES = {
         handover_name: handoverEmp?.name || null,
       }
       for (const m of (mgmtUsers || [])) {
-        if (m.email) sendLeaveEmail('leave_submitted', m.email, emailData)
+        if (m.email) sendLeaveEmail('leave_submitted', m.email, { ...emailData, recipient_name: m.name })
       }
     } catch (e) {
       console.warn('Failed to send leave submission emails:', e)
@@ -353,6 +404,13 @@ const ROUTES = {
   },
 
   'PUT /leaves/:id': async (id, body) => {
+    const user = getUser()
+    const existing = await supabaseQuery('leaves', {
+      select: 'start_date, end_date, status, employee_id, leave_type_id',
+      filters: [{ op: 'eq', col: 'id', val: parseInt(id) }],
+      single: true,
+    })
+
     const update = { updated_at: new Date().toISOString() }
     if (body.leave_type_id) update.leave_type_id = parseInt(body.leave_type_id)
     if (body.start_date) update.start_date = body.start_date
@@ -382,6 +440,46 @@ const ROUTES = {
 
     const { error } = await supabase.from('leaves').update(update).eq('id', parseInt(id))
     if (error) throw { response: { data: { error: error.message } } }
+
+    // Notify the employee when management extends an approved leave.
+    if (
+      user?.type === 'Management' &&
+      existing?.status === 'Approved' &&
+      body.end_date &&
+      body.end_date !== existing.end_date
+    ) {
+      try {
+        const emp = await supabaseQuery('employees', {
+          select: 'user_id, name',
+          filters: [{ op: 'eq', col: 'id', val: existing.employee_id }],
+          single: true,
+        })
+        const empUser = emp?.user_id ? await supabaseQuery('users', {
+          select: 'email, name',
+          filters: [{ op: 'eq', col: 'id', val: emp.user_id }],
+          single: true,
+        }) : null
+        const leaveType = await supabaseQuery('leave_types', {
+          select: 'title',
+          filters: [{ op: 'eq', col: 'id', val: existing.leave_type_id }],
+          single: true,
+        })
+        if (empUser?.email) {
+          const totalDays = update.total_leave_days ?? await countWorkingDays(existing.start_date, body.end_date)
+          sendLeaveEmail('leave_extended', empUser.email, {
+            recipient_name: empUser.name,
+            leave_type: leaveType?.title || 'Leave',
+            reviewer: user.name,
+            old_end_date: existing.end_date,
+            new_end_date: body.end_date,
+            total_days: totalDays,
+          })
+        }
+      } catch (e) {
+        console.warn('Failed to send leave extension email:', e)
+      }
+    }
+
     return { data: { success: true } }
   },
 
@@ -455,7 +553,7 @@ const ROUTES = {
           single: true,
         })
         const empUser = emp?.user_id ? await supabaseQuery('users', {
-          select: 'email',
+          select: 'email, name',
           filters: [{ op: 'eq', col: 'id', val: emp.user_id }],
           single: true,
         }) : null
@@ -469,6 +567,7 @@ const ROUTES = {
             body.status === 'Approved' ? 'leave_approved' : 'leave_rejected',
             empUser.email,
             {
+              recipient_name: empUser.name,
               leave_type: leaveType?.title || 'Leave',
               is_half_day: leave.is_half_day,
               half_day_type: leave.half_day_type,
@@ -508,7 +607,7 @@ const ROUTES = {
 
     try {
       const mgmtUsers = await supabaseQuery('users', {
-        select: 'email',
+        select: 'email, name',
         filters: [{ op: 'eq', col: 'type', val: 'Management' }, { op: 'eq', col: 'is_active', val: 1 }],
       })
       const leave = await supabaseQuery('leaves', {
@@ -529,7 +628,7 @@ const ROUTES = {
         total_days: leave?.total_leave_days || 0,
       }
       for (const m of (mgmtUsers || [])) {
-        if (m.email) sendLeaveEmail('leave_cancelled', m.email, emailData)
+        if (m.email) sendLeaveEmail('leave_cancelled', m.email, { ...emailData, recipient_name: m.name })
       }
     } catch (e) {
       console.warn('Failed to send leave cancellation emails:', e)
@@ -738,15 +837,15 @@ const ROUTES = {
 
     for (const emp of (employees || [])) {
       if (emp.email) {
-        try {
-          await sendLeaveEmail('holiday_reminder', emp.email, {
-            employee_name: emp.name,
-            holidays: holidayData,
-          })
+        const ok = await sendLeaveEmail('holiday_reminder', emp.email, {
+          employee_name: emp.name,
+          holidays: holidayData,
+        })
+        if (ok) {
           sentCount++
-        } catch (e) {
+        } else {
           failCount++
-          console.warn(`Failed to send holiday reminder to ${emp.email}:`, e)
+          console.warn(`Failed to send holiday reminder to ${emp.email}`)
         }
       }
     }
@@ -857,6 +956,7 @@ const ROUTES = {
 
     if (body.email && tempPassword) {
       sendLeaveEmail('employee_created', body.email, {
+        recipient_name: body.name,
         employee_name: body.name,
         email: body.email,
         password: tempPassword,

@@ -54,6 +54,8 @@ export default function AppLayout() {
     if (n.type === 'leave_approved') return `Your ${d.leaveType} was approved by ${d.reviewer}`
     if (n.type === 'leave_rejected') return `Your ${d.leaveType} was rejected by ${d.reviewer}`
     if (n.type === 'leave_handover') return `You've been assigned as handover for ${d.employeeName}'s ${d.leaveType}`
+    if (n.type === 'staff_on_leave') return `${d.employeeName} is on ${d.leaveType} leave until ${d.endDate}`
+    if (n.type === 'staff_returned') return `${d.employeeName} is back from ${d.leaveType} leave`
     return n.type
   }
 

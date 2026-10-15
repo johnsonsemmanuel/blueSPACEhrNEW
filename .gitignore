@@ -6,3 +6,7 @@ dist/
 server.zip
 .vercel
 .env*
+
+# Local tooling artifacts
+deno.lock
+supabase/.temp/cli-latest
