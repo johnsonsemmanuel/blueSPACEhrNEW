@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 
 const Input = forwardRef(({ label, error, className = '', ...props }, ref) => {
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {label && (
         <label className="form-label">{label}</label>
       )}

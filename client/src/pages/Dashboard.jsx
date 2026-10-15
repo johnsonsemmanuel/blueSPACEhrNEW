@@ -18,7 +18,7 @@ function StatCard({ icon: Icon, label, value, color, delay = 0 }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease, delay }}
-      className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex items-center gap-4 transition-shadow duration-200 ease-out-expo hover:shadow-md"
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex items-center gap-4 transition-shadow duration-200 ease-out-expo hover:shadow-md"
     >
       <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
         <Icon size={18} className="text-white" />
