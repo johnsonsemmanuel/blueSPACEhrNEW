@@ -30,12 +30,49 @@ export default function ApplyLeave() {
     contact_during_leave: '',
     leave_address: '',
   })
+  const [errors, setErrors] = useState({})
+  const [draft, setDraft] = useState(null)
 
   useEffect(() => {
     api.get('/leave-types').then(r => setLeaveTypes(r.data)).catch(() => {})
     api.get('/employees/list').then(r => setEmployees(r.data)).catch(() => {})
     api.get('/leaves/balance').then(r => setBalance(r.data)).catch(() => {})
     api.get('/leaves/holidays').then(r => setHolidays(r.data)).catch(() => {})
+  }, [])
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('applyLeaveDraft')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        setForm(parsed)
+      } catch (e) {
+        console.warn('Failed to parse leave draft', e)
+      }
+    }
+  }, [])
+
+  // Save draft to localStorage on form changes (debounced)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      localStorage.setItem('applyLeaveDraft', JSON.stringify(form))
+    }, 1000)
+    return () => clearTimeout(handler)
+  }, [form])
+
+  // Global shortcut: Press '+' to focus on leave type select (or reset form?)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '+' && !e.shiftKey) {
+        e.preventDefault()
+        // Focus on leave type select
+        const select = document.querySelector('select[name="leave_type_id"]')
+        if (select) select.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   const selectedType = leaveTypes.find(lt => lt.id === parseInt(form.leave_type_id))
@@ -71,6 +108,38 @@ export default function ApplyLeave() {
 
   const handoverEmp = employees.find(e => e.id === parseInt(form.handover_to))
 
+  // Validation function
+  function validateForm(values) {
+    const errors = {}
+    if (!values.leave_type_id) errors.leave_type_id = 'Leave type is required'
+    if (!values.start_date) errors.start_date = 'Start date is required'
+    if (!values.end_date) errors.end_date = 'End date is required'
+    if (values.is_half_day && !values.half_day_type) errors.half_day_type = 'Please select Morning or Afternoon'
+    if (!values.leave_reason.trim()) errors.leave_reason = 'Reason is required'
+    if (!values.handover_to) errors.handover_to = 'Handover person is required'
+    if (values.start_date && values.end_date && !values.is_half_day && new Date(values.end_date) < new Date(values.start_date)) {
+      errors.end_date = 'End date must be after start date'
+    }
+    const remaining = balance.find(b => b.id === parseInt(values.leave_type_id))?.remaining
+    if (remaining !== undefined) {
+      const diff = values.start_date && values.end_date && !values.is_half_day
+        ? countWorkingDays(values.start_date, values.end_date) || 1
+        : values.is_half_day ? 0.5 : 0
+      if (diff > remaining) {
+        errors.balance = `Insufficient balance. You have ${remaining} days remaining.`
+      }
+    }
+    return errors
+  }
+
+  // Run validation whenever form changes (excluding loading state)
+  useEffect(() => {
+    if (!loading) {
+      const newErrors = validateForm(form)
+      setErrors(newErrors)
+    }
+  }, [form, loading])
+
   const handleHalfDayToggle = (checked) => {
     if (checked) {
       setForm(prev => ({
@@ -98,38 +167,47 @@ export default function ApplyLeave() {
 
   const handlePreview = (e) => {
     e.preventDefault()
-    if (!form.leave_type_id || !form.start_date || !form.end_date) {
-      toast.error('Please fill all required fields')
-      return
-    }
-    if (form.is_half_day && !form.half_day_type) {
-      toast.error('Please select Morning or Afternoon for your half day')
-      return
-    }
-    if (!form.leave_reason.trim()) {
-      toast.error('Please provide a reason for your leave')
-      return
-    }
-    if (!form.handover_to) {
-      toast.error('Please select a handover staff')
-      return
-    }
-    if (!form.is_half_day && new Date(form.end_date) < new Date(form.start_date)) {
-      toast.error('End date must be after start date')
-      return
-    }
-    if (remainingBalance !== undefined && diffDays > remainingBalance) {
-      toast.error(`Insufficient balance. You have ${remainingBalance} days remaining.`)
+    // Check errors before allowing preview
+    if (Object.keys(errors).length > 0) {
+      // Show first error
+      const firstError = Object.values(errors)[0]
+      toast.error(firstError)
       return
     }
     setShowPreview(true)
   }
 
   const handleSubmit = async () => {
+    // Final validation
+    const finalErrors = validateForm(form)
+    if (Object.keys(finalErrors).length > 0) {
+      toast.error(Object.values(finalErrors)[0])
+      return
+    }
     setLoading(true)
     try {
       await api.post('/leaves', form)
-      toast.success('Leave request submitted successfully')
+      toast.success('Leave request submitted successfully', {
+        duration: 5000,
+        action: {
+          label: 'View Calendar',
+          onClick: () => navigate('/my-leaves')
+        }
+      })
+      // Clear draft on success
+      localStorage.removeItem('applyLeaveDraft')
+      setForm({
+        leave_type_id: '',
+        start_date: '',
+        end_date: '',
+        leave_reason: '',
+        handover_to: '',
+        handover_notes: '',
+        is_half_day: false,
+        half_day_type: '',
+        contact_during_leave: '',
+        leave_address: '',
+      })
       navigate('/my-leaves')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to submit leave request')
@@ -152,178 +230,183 @@ export default function ApplyLeave() {
             <p className="text-xs text-gray-500">Submit a new leave request</p>
           </div>
         </div>
+      </motion.div>
 
-        {balance.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {balance.map((b) => {
-              const isSelected = form.leave_type_id == b.id
-              const isExhausted = b.remaining <= 0
-              const isLow = b.remaining > 0 && b.remaining <= 3
-              const chipClass = isSelected
-                ? 'bg-brand-50 border-brand-200 text-brand-700'
-                : isExhausted
-                  ? 'bg-red-50 border-red-200 text-red-600'
-                  : isLow
-                    ? 'bg-amber-50 border-amber-200 text-amber-700'
-                    : 'bg-white border-gray-100 text-gray-600'
-              return (
-                <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${chipClass}`}>
-                  {b.title}: <strong>{b.remaining}</strong>/{b.total} days
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        <Card>
-          <form onSubmit={handlePreview} className="space-y-5">
-            <Select
-              label="Leave Type *"
-              placeholder="Select leave type"
-              value={form.leave_type_id}
-              onChange={(e) => setForm({ ...form, leave_type_id: e.target.value })}
-              options={leaveTypes.map((lt) => ({ value: lt.id, label: `${lt.title} (${lt.days} days)` }))}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Start Date *"
-                type="date"
-                value={form.start_date}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
-              <Input
-                label={form.is_half_day ? 'Date (locked)' : 'End Date *'}
-                type="date"
-                value={form.end_date}
-                onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                min={form.start_date || new Date().toISOString().split('T')[0]}
-                disabled={form.is_half_day}
-                className={form.is_half_day ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="half-day"
-                    checked={form.is_half_day}
-                    onChange={(e) => handleHalfDayToggle(e.target.checked)}
-                    className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
-                  />
-                  <span className="text-xs font-medium text-deep-500">Half Day</span>
-                </label>
-                {diffDays > 0 && (
-                  <span className="text-xs text-deep-600 bg-brand-50 px-3 py-1.5 rounded-md">
-                    <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
-                    {form.is_half_day && halfDayLabel && <span className="text-gray-500 ml-1">({halfDayLabel})</span>}
-                    {remainingBalance !== undefined && (
-                      <span className="text-gray-500 ml-2">· {remainingBalance} remaining</span>
-                    )}
-                  </span>
-                )}
+      {balance.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {balance.map((b) => {
+            const isSelected = form.leave_type_id == b.id
+            const isExhausted = b.remaining <= 0
+            const isLow = b.remaining > 0 && b.remaining <= 3
+            const chipClass = isSelected
+              ? 'bg-brand-50 border-brand-200 text-brand-700'
+              : isExhausted
+                ? 'bg-red-50 border-red-200 text-red-600'
+                : isLow
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-white border-gray-100 text-gray-600'
+            return (
+              <div key={b.id} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${chipClass}`}>
+                {b.title}: <strong>{b.remaining}</strong>/{b.total} days
               </div>
+            )
+          })}
+        </div>
+      )}
 
-              {form.is_half_day && (
-                <div className="flex items-center gap-4 pl-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="half_day_type"
-                      value="morning"
-                      checked={form.half_day_type === 'morning'}
-                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
-                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
-                    />
-                    <Sun size={13} className="text-amber-500" />
-                    <span className="text-xs font-medium text-deep-500">Morning</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="half_day_type"
-                      value="afternoon"
-                      checked={form.half_day_type === 'afternoon'}
-                      onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
-                      className="border-gray-300 text-deep-600 focus:ring-brand-500"
-                    />
-                    <Moon size={13} className="text-blue-500" />
-                    <span className="text-xs font-medium text-deep-500">Afternoon</span>
-                  </label>
-                </div>
+      <Card>
+        <form onSubmit={handlePreview} className="space-y-5">
+          <Select
+            label="Leave Type *"
+            placeholder="Select leave type"
+            value={form.leave_type_id}
+            onChange={(e) => setForm({ ...form, leave_type_id: e.target.value })}
+            options={leaveTypes.map((lt) => ({ value: lt.id, label: `${lt.title} (${lt.days} days)` }))}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Start Date *"
+              type="date"
+              value={form.start_date}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+            <Input
+              label={form.is_half_day ? 'Date (locked)' : 'End Date *'}
+              type="date"
+              value={form.end_date}
+              onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+              min={form.start_date || new Date().toISOString().split('T')[0]}
+              disabled={form.is_half_day}
+              className={form.is_half_day ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="half-day"
+                  checked={form.is_half_day}
+                  onChange={(e) => handleHalfDayToggle(e.target.checked)}
+                  className="rounded border-gray-300 text-deep-600 focus:ring-brand-500"
+                />
+                <span className="text-xs font-medium text-deep-500">Half Day</span>
+              </label>
+              {diffDays > 0 && (
+                <span className="text-xs text-deep-600 bg-brand-50 px-3 py-1.5 rounded-md">
+                  <strong>{diffDays} day{diffDays > 1 ? 's' : ''}</strong>
+                  {form.is_half_day && halfDayLabel && <span className="text-gray-500 ml-1">({halfDayLabel})</span>}
+                  {remainingBalance !== undefined && (
+                    <span className="text-gray-500 ml-2">· {remainingBalance} remaining</span>
+                  )}
+                </span>
               )}
             </div>
 
-            <div>
-              <label className="form-label mb-1.5">
-                Reason for Leave *
-              </label>
-              <textarea
-                value={form.leave_reason}
-                onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
-                rows={3}
-                className="form-input"
-                placeholder="Briefly describe the reason for your leave..."
-              />
-            </div>
+            {form.is_half_day && (
+              <div className="flex items-center gap-4 pl-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="half_day_type"
+                    value="morning"
+                    checked={form.half_day_type === 'morning'}
+                    onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                    className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                  />
+                  <Sun size={13} className="text-amber-500" />
+                  <span className="text-xs font-medium text-deep-500">Morning</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="half_day_type"
+                    value="afternoon"
+                    checked={form.half_day_type === 'afternoon'}
+                    onChange={(e) => setForm({ ...form, half_day_type: e.target.value })}
+                    className="border-gray-300 text-deep-600 focus:ring-brand-500"
+                  />
+                  <Moon size={13} className="text-blue-500" />
+                  <span className="text-xs font-medium text-deep-500">Afternoon</span>
+                </label>
+              </div>
+            )}
+          </div>
 
-            <div>
-              <Select
-                label="Handover To *"
-                placeholder="Who is covering your work?"
-                value={form.handover_to}
-                onChange={(e) => setForm({ ...form, handover_to: e.target.value })}
-                options={employees.filter(e => e.id !== null).map((emp) => ({ value: emp.id, label: `${emp.name} (${emp.employee_id})` }))}
-              />
-              <label className="form-label mb-1.5 mt-3">
-                Handover Notes (optional)
+          <div>
+            <label className="form-label mb-1.5">
+              Reason for Leave *
+            </label>
+            <textarea
+              value={form.leave_reason}
+              onChange={(e) => setForm({ ...form, leave_reason: e.target.value })}
+              rows={3}
+              className="form-input"
+              placeholder="e.g., Medical appointment, Family emergency"
+            />
+            {errors.leave_reason && <p className="text-xs text-red-500">{errors.leave_reason}</p>}
+          </div>
+
+          <div>
+            <Select
+              label="Handover To *"
+              placeholder="Who is covering your work?"
+              value={form.handover_to}
+              onChange={(e) => setForm({ ...form, handover_to: e.target.value })}
+              options={employees.filter(e => e.id !== null).map((emp) => ({ value: emp.id, label: `${emp.name} (${emp.employee_id})` }))}
+            />
+            {errors.handover_to && <p className="text-xs text-red-500">{errors.handover_to}</p>}
+            <label className="form-label mb-1.5 mt-3">
+              Handover Notes (optional)
+            </label>
+            <textarea
+              value={form.handover_notes}
+              onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
+              rows={2}
+              className="form-input"
+              placeholder="e.g., Please brief John on the pending client report."
+            />
+            {errors.handover_notes && <p className="text-xs text-red-500">{errors.handover_notes}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Contact Phone (optional)"
+              type="tel"
+              value={form.contact_during_leave}
+              onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
+              placeholder="e.g., +233 24 123 4567"
+            />
+            {errors.contact_during_leave && <p className="text-xs text-red-500">{errors.contact_during_leave}</p>}
+            <div className="sm:col-span-2">
+              <label className="form-label mb-1.5">
+                Leave Address (optional)
               </label>
               <textarea
-                value={form.handover_notes}
-                onChange={(e) => setForm({ ...form, handover_notes: e.target.value })}
+                value={form.leave_address}
+                onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
                 rows={2}
                 className="form-input"
-                placeholder="Brief notes for the person covering you..."
+                placeholder="e.g., Home address, Hotel name and address"
               />
+              {errors.leave_address && <p className="text-xs text-red-500">{errors.leave_address}</p>}
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Contact Phone (optional)"
-                type="tel"
-                value={form.contact_during_leave}
-                onChange={(e) => setForm({ ...form, contact_during_leave: e.target.value })}
-                placeholder="Number where you can be reached"
-              />
-              <div className="sm:col-span-2">
-                <label className="form-label mb-1.5">
-                  Leave Address (optional)
-                </label>
-                <textarea
-                  value={form.leave_address}
-                  onChange={(e) => setForm({ ...form, leave_address: e.target.value })}
-                  rows={2}
-                  className="form-input"
-                  placeholder="Where will you be during your leave?"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" className="flex-1">
-                <Eye size={14} />
-                Preview & Submit
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/my-leaves')} className="flex-1">
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </motion.div>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" className="flex-1">
+              <Eye size={14} />
+              Preview & Submit
+            </Button>
+            <Button type="button" variant="outline" onClick={() => navigate('/my-leaves')} className="flex-1">
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Card>
 
       {/* Preview Modal */}
       <Modal open={showPreview} onClose={() => setShowPreview(false)} title="Preview Leave Request" size="lg">
