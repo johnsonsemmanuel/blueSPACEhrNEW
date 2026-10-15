@@ -1,5 +1,5 @@
 {
-  "buildCommand": "echo 'Testing vercel.json' && pwd && ls -la",
+  "buildCommand": "cd \"$PWD/client\" && npm install && npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
