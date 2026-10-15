@@ -957,6 +957,7 @@ const ROUTES = {
         phone: body.phone,
         address: body.address,
         is_active: body.is_active ?? 1,
+        password: tempPassword,
       }),
     })
 
@@ -971,7 +972,6 @@ const ROUTES = {
       next_of_kin_phone: body.next_of_kin_phone || null,
       next_of_kin_relationship: body.next_of_kin_relationship || null,
       email: body.email,
-      password: tempPassword,
       employee_id: body.employee_id,
       branch_id: body.branch_id ? parseInt(body.branch_id) : null,
       department_id: body.department_id ? parseInt(body.department_id) : null,

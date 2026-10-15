@@ -320,12 +320,15 @@ serve(async (req) => {
         if (!body.name || !body.email) {
           return json({ error: "name and email are required" }, 400, corsHeaders);
         }
+        // Hash the temporary password so the employee can log in with the value
+        // emailed to them; force a change on first login.
+        const tempPassword = body.password || "changeme123";
         const { data, error } = await supabase
           .from("users")
           .insert({
             name: body.name,
             email: body.email,
-            password: "$2a$10$placeholder",
+            password: bcrypt.hashSync(tempPassword, 10),
             type: body.type || "Staff",
             phone: body.phone,
             address: body.address,
