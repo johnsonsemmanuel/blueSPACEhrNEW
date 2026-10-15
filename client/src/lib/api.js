@@ -1217,6 +1217,68 @@ const ROUTES = {
     return { data: { success: true } }
   },
 
+  'GET /announcements': async () => {
+    const data = await supabaseQuery('announcements', {
+      select: '*',
+      order: { col: 'created_at', asc: false },
+    })
+    return { data: data || [] }
+  },
+
+  'POST /announcements': async (body) => {
+    const user = getUser()
+    if (!user) throw { response: { data: { error: 'Not authenticated' } } }
+    if (user.type !== 'Management') throw { response: { data: { error: 'Only management can post announcements' } } }
+    const title = (body.title || '').trim()
+    const message = (body.body || '').trim()
+    if (!title || !message) throw { response: { data: { error: 'Title and message are required' } } }
+
+    const { data: ann, error } = await supabase.from('announcements').insert({
+      title,
+      body: message,
+      created_by: user.id,
+      created_by_name: user.name,
+    }).select().single()
+    if (error) throw { response: { data: { error: error.message } } }
+
+    try {
+      const users = await supabaseQuery('users', {
+        select: 'id, email, name',
+        filters: [{ op: 'eq', col: 'is_active', val: 1 }],
+      })
+      for (const u of (users || [])) {
+        if (u.email) {
+          sendLeaveEmail('announcement', u.email, {
+            recipient_name: u.name,
+            title,
+            body: message,
+            sender_name: user.name,
+          })
+        }
+      }
+      await insertNotifications((users || []).map((u) => ({
+        user_id: u.id,
+        type: 'announcement',
+        data: JSON.stringify({ title, body: message }),
+      })))
+    } catch (e) {
+      console.warn('Failed to broadcast announcement:', e)
+    }
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      user_name: user?.name,
+      user_role: user?.type,
+      action: 'announcement_created',
+      description: `Announcement "${title}" published`,
+      severity: 'INFO',
+      entity_type: 'announcement',
+      entity_id: ann.id,
+    })
+
+    return { data: ann }
+  },
+
   'GET /audit-logs': async (params) => {
     const data = await supabaseQuery('audit_logs', { select: '*', order: { col: 'created_at', asc: false } })
     return { data: data || [] }

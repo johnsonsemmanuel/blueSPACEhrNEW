@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle } from 'lucide-react'
+import { CalendarCheck, Clock, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
@@ -93,6 +93,17 @@ export default function Dashboard() {
 
   const totalRemaining = balance.reduce((s, b) => s + b.remaining, 0)
 
+  // For non-management, add a prominent Leave Balance StatCard at the top
+  const nonMgmtCards = !isMgmt && balance.length > 0 ? [
+    {
+      icon: CalendarPlus,
+      label: 'Leave Balance',
+      value: totalRemaining,
+      // Determine color based on total remaining
+      color: totalRemaining <= 0 ? 'bg-red-500' : totalRemaining <= 3 ? 'bg-amber-500' : 'bg-brand-600',
+    }
+  ] : []
+
   const recentLeaves = allLeaves.slice(0, 5)
 
   const pendingLeaves = useMemo(() =>
@@ -138,7 +149,7 @@ export default function Dashboard() {
   }, [allLeaves])
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-[calc(100vh-4rem)]">
       <div className="flex items-center justify-between gap-3 mb-6">
         <motion.div
           initial={{ opacity: 0, x: -8 }}
@@ -178,14 +189,13 @@ export default function Dashboard() {
           </button>
         </div>
       )}
-
-      {cards.length > 0 && (
-        <div className={`grid grid-cols-2 gap-3 mb-6 ${isMgmt ? 'md:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4'}`}>
-          {cards.map((card, i) => (
-            <StatCard key={i} {...card} delay={i * 0.05} />
-          ))}
-        </div>
-      )}
+      
+      {/* Combine non-mgmt balance card with regular cards */}
+      <div className={`grid grid-cols-2 gap-3 mb-6 ${isMgmt ? 'md:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4'}`}>
+        {[...nonMgmtCards, ...cards].map((card, i) => (
+          <StatCard key={i} {...card} delay={i * 0.05} />
+        ))}
+      </div>
 
       {!isMgmt && balance.length > 0 && (
         <>
@@ -274,12 +284,13 @@ export default function Dashboard() {
                         <p className="text-[10px] text-gray-500">{l.start_date} - {l.end_date}</p>
                       </div>
                     </div>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ml-3 ${isActive ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50'}`}>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ml-3 ${isActive ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50'}`}
+                      title={`${l.leave_type_name} from ${l.start_date} to ${l.end_date}${l.is_half_day ? ` (${l.half_day_type === 'morning' ? 'AM' : 'PM'})` : ''}`}>
                       {label}
                     </span>
                   </div>
-                )
-              })}
+                )}
+              )}
             </div>
           </Card>
         </div>
@@ -309,7 +320,7 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
-
+        
         {holidays.length > 0 && (
           <div className={onLeave.length > 0 ? 'lg:col-span-3' : 'lg:col-span-4'}>
             <Card>
@@ -328,7 +339,7 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
-
+        
         {balance.length > 0 && (
           <div className={onLeave.length > 0 || holidays.length > 0 ? 'lg:col-span-5' : 'lg:col-span-12'}>
             <Card>
@@ -352,8 +363,8 @@ export default function Dashboard() {
                         />
                       </div>
                     </div>
-                  )
-                })}
+                  )}
+                )}
               </div>
             </Card>
           </div>

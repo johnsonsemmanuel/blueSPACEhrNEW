@@ -46,6 +46,20 @@ const SAMPLES: Record<string, Record<string, any>> = {
     ...DATE,
   },
   staff_returned: { employee_name: "Ada Obi", leave_type: "Annual", recipient_name: "Manager Mike" },
+  staff_going_on_leave: {
+    employee_name: "Ada Obi",
+    department: "Operations",
+    leave_type: "Annual",
+    handover_name: "Bob",
+    recipient_name: "Manager Mike",
+    ...DATE,
+  },
+  announcement: {
+    recipient_name: "Manager Mike",
+    title: "Public Holiday - Independence Day",
+    body: "The office will be closed on 1 October.\nPlease plan accordingly.",
+    sender_name: "HR",
+  },
 };
 
 for (const [type, data] of Object.entries(SAMPLES)) {
@@ -62,6 +76,17 @@ Deno.test("unknown email type returns null", () => {
   assertEquals(buildEmail("does_not_exist", {}), null);
 });
 
+Deno.test("announcement escapes HTML in title and body", () => {
+  const html = buildEmail("announcement", {
+    title: "<b>Hi</b>",
+    body: "<script>alert(1)</script>",
+    recipient_name: "A",
+  })!;
+  assert(!html.includes("<script>alert(1)</script>"));
+  assertStringIncludes(html, "&lt;script&gt;");
+  assertStringIncludes(html, "&lt;b&gt;Hi&lt;/b&gt;");
+});
+
 Deno.test("greeting is personalized with the recipient's name", () => {
   const html = buildEmail("staff_on_leave", SAMPLES.staff_on_leave)!;
   assertStringIncludes(html, "Hi Manager Mike,");
@@ -72,6 +97,13 @@ Deno.test("staff_on_leave subject names the employee and range", () => {
   assertEquals(
     buildSubject("staff_on_leave", SAMPLES.staff_on_leave),
     "Ada Obi is on leave (2026-01-05 - 2026-01-09)"
+  );
+});
+
+Deno.test("staff_going_on_leave subject names the employee and start date", () => {
+  assertEquals(
+    buildSubject("staff_going_on_leave", SAMPLES.staff_going_on_leave),
+    "Ada Obi is going on leave (2026-01-05)"
   );
 });
 

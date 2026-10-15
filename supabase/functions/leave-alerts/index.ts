@@ -1,7 +1,8 @@
 // leave-alerts — scheduled (pg_cron) edge function.
 //
 // Announces to ALL active staff, by personalized email + SMS, when a colleague
-// is on leave and when a colleague returns. Also writes in-app notifications.
+// is about to go on leave (a few days ahead), when they start leave, and when
+// they return. Also writes in-app notifications.
 //
 // Auth: requires `Authorization: Bearer <CRON_SECRET>` (or the service role key).
 // Idempotent: each (leave_id, event) is sent at most once via staff_notification_log.
@@ -26,6 +27,12 @@ const SEND_CONCURRENCY = 5;
 // prevents the first deployment from emailing everyone who returned in the last
 // two weeks.
 const RETURNED_LOOKBACK_DAYS = 4;
+// How many days ahead of a leave's start date to remind the team. The reminder
+// is actually sent on the last working day on or before (start_date - this),
+// so a Monday leave is announced on the previous working day, not a weekend.
+const REMINDER_DAYS_BEFORE = 2;
+// How far ahead to look for leaves that might need a reminder.
+const REMINDER_WINDOW_DAYS = 10;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,9 +51,29 @@ function daysBefore(isoDate: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function daysAfter(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function isWeekend(isoDate: string): boolean {
   const dow = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
   return dow === 0 || dow === 6;
+}
+
+// The latest working day (not weekend, not holiday) on or before the given date.
+// Used so a reminder is always delivered on a real working day.
+function lastWorkingDayOnOrBefore(isoDate: string, holidays: any[]): string {
+  const isHolidayDate = (iso: string) =>
+    holidays.some((h) => h.date <= iso && (h.end_date || h.date) >= iso);
+  let d = isoDate;
+  let guard = 0;
+  while ((isWeekend(d) || isHolidayDate(d)) && guard < 14) {
+    d = daysBefore(d, 1);
+    guard++;
+  }
+  return d;
 }
 
 async function mapLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
@@ -118,13 +145,17 @@ serve(async (req) => {
       };
     });
 
-    // ---- Is today a working day? (weekday and not a holiday) ----
+    // ---- Holidays (window covering today plus reminder walk-backs) ----
+    const holidayFrom = daysBefore(today, 7);
+    const holidayTo = daysAfter(today, REMINDER_WINDOW_DAYS);
     const { data: holidays } = await supabase
       .from("holidays")
       .select("date, end_date")
-      .lte("date", today)
-      .gte("end_date", today);
-    const isHoliday = (holidays || []).length > 0;
+      .lte("date", holidayTo)
+      .gte("end_date", holidayFrom);
+    const isHoliday = (holidays || []).some(
+      (h: any) => h.date <= today && (h.end_date || h.date) >= today
+    );
     const workingDay = !isWeekend(today) && !isHoliday;
 
     // ---- Approved leaves covering today, and recently ended ----
@@ -149,6 +180,7 @@ serve(async (req) => {
       workingDay,
       started: 0,
       returned: 0,
+      reminded: 0,
       emails: 0,
       sms: 0,
       alreadySent: 0,
@@ -173,9 +205,19 @@ serve(async (req) => {
     async function recordSent(leaveId: number, event: string, count: number): Promise<void> {
       try {
         await supabase.from("staff_notification_log").insert({ leave_id: leaveId, event });
+        const actionByEvent: Record<string, string> = {
+          start: "staff_on_leave_notified",
+          returned: "staff_returned_notified",
+          remind: "leave_reminder_notified",
+        };
+        const labelByEvent: Record<string, string> = {
+          start: "On-leave",
+          returned: "Returned",
+          remind: "Upcoming-leave",
+        };
         await supabase.from("audit_logs").insert({
-          action: event === "start" ? "staff_on_leave_notified" : "staff_returned_notified",
-          description: `${event === "start" ? "On-leave" : "Returned"} announcement sent for leave #${leaveId} to ${count} staff`,
+          action: actionByEvent[event] || "staff_notified",
+          description: `${labelByEvent[event] || event} announcement sent for leave #${leaveId} to ${count} staff`,
           severity: "INFO",
           entity_type: "leave",
           entity_id: leaveId,
@@ -185,7 +227,7 @@ serve(async (req) => {
       }
     }
 
-    async function announce(leave: any, event: "start" | "returned"): Promise<void> {
+    async function announce(leave: any, event: "start" | "returned" | "remind"): Promise<void> {
       if (await alreadySent(leave.id, event)) {
         summary.alreadySent++;
         return;
@@ -205,12 +247,18 @@ serve(async (req) => {
       const audience = recipients.filter((r) => r.id !== subjectUserId);
 
       // Public template/type name differs from the ledger event name.
-      const templateType = event === "start" ? "staff_on_leave" : "staff_returned";
+      const templateType =
+        event === "start"
+          ? "staff_on_leave"
+          : event === "returned"
+            ? "staff_returned"
+            : "staff_going_on_leave";
 
       if (dryRun) {
         console.log(`[dryRun] ${event} for leave #${leave.id} -> ${audience.length} recipients`);
         if (event === "start") summary.started++;
-        else summary.returned++;
+        else if (event === "returned") summary.returned++;
+        else summary.reminded++;
         return;
       }
 
@@ -253,10 +301,29 @@ serve(async (req) => {
       summary.emails += results.emails;
       summary.sms += results.sms;
       if (event === "start") summary.started++;
-      else summary.returned++;
+      else if (event === "returned") summary.returned++;
+      else summary.reminded++;
     }
 
     if (workingDay) {
+      // "Going on leave" reminder: for approved leaves starting in the next few
+      // days, send on the last working day on/before (start_date - N days).
+      const reminderWindowEnd = daysAfter(today, REMINDER_WINDOW_DAYS);
+      const { data: upcoming, error: upErr } = await supabase
+        .from("leaves")
+        .select(LEAVE_SELECT)
+        .eq("status", "Approved")
+        .gt("start_date", today)
+        .lte("start_date", reminderWindowEnd);
+      if (upErr) throw new Error(upErr.message);
+      for (const l of (upcoming as any[]) || []) {
+        const target = lastWorkingDayOnOrBefore(
+          daysBefore(l.start_date, REMINDER_DAYS_BEFORE),
+          holidays || []
+        );
+        if (target === today) await announce(l, "remind");
+      }
+
       // "On leave" for every approved leave covering today.
       for (const l of coveringRows) await announce(l, "start");
 

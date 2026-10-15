@@ -19,6 +19,13 @@ function greeting(data: EmailData): string {
     : "";
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string
+  );
+}
+
 export function buildEmail(type: string, data: EmailData): string | null {
   const base = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; color: #1e293b;">
@@ -182,6 +189,30 @@ export function buildEmail(type: string, data: EmailData): string | null {
     ${footer}`;
   }
 
+  if (type === "staff_going_on_leave") {
+    return `${base}
+      <h2 style="font-size: 16px; margin: 0 0 16px; color: #1a365d;">${data.employee_name} is going on leave</h2>
+      ${greeting(data)}
+      <p style="font-size: 14px; margin: 0 0 16px;">Please be informed that <strong>${data.employee_name}</strong>${data.department ? ` (${data.department})` : ""} is scheduled to go on ${data.leave_type} leave in a few days.</p>
+      <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+        <tr><td style="padding: 8px 0; color: #64748b;">Starts</td><td style="padding: 8px 0; font-weight: 600;">${data.start_date}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b;">Duration</td><td style="padding: 8px 0; font-weight: 600;">${data.start_date} to ${data.end_date}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b;">Expected back</td><td style="padding: 8px 0; font-weight: 600;">${data.end_date}</td></tr>
+        ${data.handover_name ? `<tr><td style="padding: 8px 0; color: #64748b;">Handover to</td><td style="padding: 8px 0;">${data.handover_name}</td></tr>` : ""}
+      </table>
+      <p style="font-size: 13px; color: #64748b; margin: 20px 0 0;">Please plan accordingly and direct any urgent matters to ${data.handover_name ? data.handover_name : "their manager"}.</p>
+    ${footer}`;
+  }
+
+  if (type === "announcement") {
+    return `${base}
+      <h2 style="font-size: 16px; margin: 0 0 16px; color: #1a365d;">${escapeHtml(data.title)}</h2>
+      ${greeting(data)}
+      <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(data.body)}</div>
+      <p style="font-size: 13px; color: #64748b; margin: 20px 0 0;">&mdash; ${escapeHtml(data.sender_name || "BlueSPACE HR")}</p>
+    ${footer}`;
+  }
+
   return null;
 }
 
@@ -196,6 +227,8 @@ export function buildSubject(type: string, data: EmailData): string {
   if (type === "leave_extended") return `Leave Extended - ${data.leave_type}`;
   if (type === "staff_on_leave") return `${data.employee_name} is on leave (${data.start_date} - ${data.end_date})`;
   if (type === "staff_returned") return `${data.employee_name} is back from leave`;
+  if (type === "staff_going_on_leave") return `${data.employee_name} is going on leave (${data.start_date})`;
+  if (type === "announcement") return data.title || "Announcement";
   return "HR Notification";
 }
 
