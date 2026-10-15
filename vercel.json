@@ -1,5 +1,5 @@
 {
-  "buildCommand": "if [ -d \"client\" ]; then cd client && npm install && npm run build; else echo \"Client directory not found\" && ls -la && exit 1; fi",
+  "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
