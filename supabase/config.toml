@@ -1,0 +1,18 @@
+# Supabase project configuration.
+#
+# The [functions.*] sections below pin JWT verification for the deployed edge
+# functions so that a plain `supabase functions deploy <name>` reproduces the
+# live setting. Do not remove these without redeploying with the matching flag.
+#
+#   email-sender : called from the browser with the anon key; verify_jwt off
+#                  to stay compatible with the app's other functions.
+#   leave-alerts : called by pg_cron with a custom bearer CRON_SECRET (not a
+#                  Supabase JWT), so JWT verification MUST stay off.
+
+project_id = "bluespace-hr"
+
+[functions.email-sender]
+verify_jwt = false
+
+[functions.leave-alerts]
+verify_jwt = false
