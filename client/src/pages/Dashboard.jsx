@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle } from 'lucide-react'
+import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle, Megaphone, Send, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
+import Input from '../components/ui/Input'
+import Modal from '../components/ui/Modal'
 import toast from 'react-hot-toast'
 import { statusBadge } from '../components/ui/Badge'
 
@@ -48,6 +50,10 @@ export default function Dashboard() {
   const [onLeave, setOnLeave] = useState([])
   const [holidays, setHolidays] = useState([])
   const [handovers, setHandovers] = useState([])
+  const [announcements, setAnnouncements] = useState([])
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', body: '' })
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
   const isMgmt = user?.type === 'Management'
   const greeting = getGreeting()
   const GreetIcon = greeting.icon
@@ -67,6 +73,9 @@ export default function Dashboard() {
       setHolidays(upcoming)
     }).catch(() => {})
     api.get('/leaves/handover-to-me').then(r => setHandovers(r.data)).catch(() => {})
+    if (isMgmt) {
+      api.get('/announcements').then(r => setAnnouncements(r.data)).catch(() => {})
+    }
   }, [user])
 
   const needsProfileUpdate = !isMgmt && (!user?.phone || !user?.address)
@@ -130,6 +139,43 @@ export default function Dashboard() {
       setAllLeaves(allLeaves.map(l => l.id === id ? { ...l, status: 'Rejected' } : l))
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to reject')
+    }
+  }
+
+  const handleAnnouncementSubmit = async (e) => {
+    e.preventDefault()
+    const title = announcementForm.title.trim()
+    const body = announcementForm.body.trim()
+    if (!title || !body) {
+      toast.error('Title and message are required')
+      return
+    }
+    setSendingAnnouncement(true)
+    try {
+      const { data } = await api.post('/announcements', { title, body })
+      setAnnouncements([data, ...announcements])
+      setAnnouncementForm({ title: '', body: '' })
+      setShowAnnouncementModal(false)
+      toast.success('Announcement sent to all staff')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to publish announcement')
+    } finally {
+      setSendingAnnouncement(false)
+    }
+  }
+
+  const formatDateTime = (d) => {
+    if (!d) return ''
+    try {
+      return new Date(d).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch {
+      return String(d)
     }
   }
 
@@ -249,6 +295,52 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </Card>
+        </div>
+      )}
+
+      {isMgmt && (
+        <div className="mb-6">
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-deep-600 flex items-center gap-2">
+                <Megaphone size={14} className="text-brand-600" />
+                Announcements
+              </h3>
+              <Button size="sm" onClick={() => setShowAnnouncementModal(true)} className="!h-7 !px-3 !text-[11px]">
+                <Plus size={12} />
+                New Announcement
+              </Button>
+            </div>
+            {announcements.length === 0 ? (
+              <div className="text-center py-6 text-gray-400">
+                <Megaphone size={28} className="mx-auto mb-2 opacity-50" />
+                <p className="text-xs">No announcements yet</p>
+                <p className="text-[10px] mt-1">Publish to notify all staff via email and in-app notification</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {announcements.slice(0, 3).map((a) => (
+                  <div key={a.id} className="border-t border-gray-100 pt-3 first:border-0 first:pt-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-semibold text-deep-600 truncate">{a.title}</h4>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{formatDateTime(a.created_at)} · by {a.created_by_name}</p>
+                        <p className="text-[11px] text-gray-600 mt-2 leading-relaxed line-clamp-3">{a.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {announcements.length > 3 && (
+                  <button
+                    onClick={() => navigate('/announcements')}
+                    className="text-[11px] text-deep-600 font-medium hover:underline pt-2"
+                  >
+                    View all {announcements.length} announcements →
+                  </button>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -464,6 +556,44 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      <Modal open={showAnnouncementModal} onClose={() => !sendingAnnouncement && setShowAnnouncementModal(false)} title="Compose Announcement">
+        <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
+          <Input
+            label="Title *"
+            value={announcementForm.title}
+            onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+            placeholder="e.g. Public Holiday Notice"
+            required
+          />
+          <div>
+            <label className="form-label mb-1.5">Message *</label>
+            <textarea
+              value={announcementForm.body}
+              onChange={(e) => setAnnouncementForm({ ...announcementForm, body: e.target.value })}
+              rows={6}
+              className="form-input"
+              placeholder="Enter the announcement message. Line breaks are preserved."
+              required
+            />
+          </div>
+          <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 flex items-start gap-2">
+            <AlertCircle size={14} className="text-amber-600 mt-0.5" />
+            <p className="text-[11px] text-amber-700">
+              Publishing sends an email and a bell notification to <strong>all active staff</strong>.
+            </p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" disabled={sendingAnnouncement}>
+              <Send size={14} />
+              {sendingAnnouncement ? 'Publishing...' : 'Publish Announcement'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setShowAnnouncementModal(false)} disabled={sendingAnnouncement}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
