@@ -27,7 +27,7 @@ export default function Expenses() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page, limit: 50, ...filters })
+      const params = new URLSearchParams({ page: 1, limit: 50, ...filters })
       const [expRes, sumRes, catRes, brRes, deptRes, remRes] = await Promise.all([
         api.get(`/expenses?${params}`),
         api.get(`/expenses/summary?${params}`),
@@ -37,7 +37,7 @@ export default function Expenses() {
         api.get('/management/reminders'),
       ])
       setExpenses(expRes.data.data)
-      setTotalPages(Math.ceil(expRes.data.total / 50))
+      setTotalPages(Math.ceil((expRes.data.total || 0) / 50))
       setSummary(sumRes.data)
       setCategories(catRes.data)
       setBranches(brRes.data)

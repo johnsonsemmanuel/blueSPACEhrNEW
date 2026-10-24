@@ -523,7 +523,91 @@ export default function AccountSettings() {
           </div>
         )}
 
-        {activeTab === 'data' && (
+        {activeTab === 'profile' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <div className="flex items-center gap-2 mb-5">
+                <User size={16} className="text-deep-600" />
+                <h2 className="text-sm font-semibold text-deep-600">Account Details</h2>
+              </div>
+              <form onSubmit={handleProfileSave} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
+                  <Input
+                    value={profile.name}
+                    onChange={e => setProfile({ ...profile, name: e.target.value })}
+                    placeholder="Your full name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                  <Input value={profile.email} disabled className="bg-gray-50 text-gray-400 cursor-not-allowed" />
+                  <p className="text-[10px] text-gray-400 mt-1">Email cannot be changed</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+                  <Input
+                    value={profile.phone}
+                    onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="Phone number"
+                  />
+                </div>
+                <div>
+                  <label className="form-label mb-1">Address</label>
+                  <textarea
+                    value={profile.address}
+                    onChange={e => setProfile({ ...profile, address: e.target.value })}
+                    placeholder="Your address"
+                    rows={2}
+                    className="form-input"
+                  />
+                </div>
+                <Button type="submit" disabled={savingProfile}>
+                  <Save size={14} />
+                  {savingProfile ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </form>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'password' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <div className="flex items-center gap-2 mb-5">
+                <KeyRound size={16} className="text-deep-600" />
+                <h2 className="text-sm font-semibold text-deep-600">Change Password</h2>
+              </div>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <Input
+                  label="Current Password"
+                  type="password"
+                  value={password.current_password}
+                  onChange={e => setPassword({ ...password, current_password: e.target.value })}
+                  placeholder="Enter current password"
+                />
+                <Input
+                  label="New Password"
+                  type="password"
+                  value={password.new_password}
+                  onChange={e => setPassword({ ...password, new_password: e.target.value })}
+                  placeholder="Enter new password"
+                />
+                <Input
+                  label="Confirm New Password"
+                  type="password"
+                  value={password.confirm}
+                  onChange={e => setPassword({ ...password, confirm: e.target.value })}
+                  placeholder="Confirm new password"
+                />
+                <Button type="submit" disabled={changingPassword}>
+                  <Lock size={14} />
+                  {changingPassword ? 'Updating...' : 'Update Password'}
+                </Button>
+              </form>
+            </Card>
+          </div>
+        )}
           <div className="space-y-6">
             <Card>
               <h3 className="text-sm font-semibold text-deep-600 mb-4 flex items-center gap-2">
