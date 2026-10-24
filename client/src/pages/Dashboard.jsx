@@ -356,64 +356,64 @@ export default function Dashboard() {
               <TrendingUp size={14} className="text-purple-600" />
               Quick Actions
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <Button
                 variant="outline"
-                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
                 onClick={() => navigate('/expenses')}
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Receipt size={20} className="text-amber-600" />
+                <div className="flex items-center gap-2 w-full">
+                  <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <Receipt size={16} className="text-amber-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-deep-600">Expenses</p>
-                    <p className="text-xs text-gray-500">Track daily expenses</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-deep-600 text-sm">Expenses</p>
+                    <p className="text-[11px] text-gray-500">Track daily expenses</p>
                   </div>
+                  {expenseSummary && (
+                    <p className="text-sm font-bold text-amber-600 flex-shrink-0">
+                      ₵{Number(expenseSummary.total || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                    </p>
+                  )}
                 </div>
-                {expenseSummary && (
-                  <p className="text-lg font-bold text-amber-600 ml-12">
-                    ₵{Number(expenseSummary.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                  </p>
-                )}
               </Button>
 
               <Button
                 variant="outline"
-                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
                 onClick={() => navigate('/payslips')}
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <CreditCard size={20} className="text-blue-600" />
+                <div className="flex items-center gap-2 w-full">
+                  <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <CreditCard size={16} className="text-blue-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-deep-600">Payslips</p>
-                    <p className="text-xs text-gray-500">Manage payroll</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-deep-600 text-sm">Payslips</p>
+                    <p className="text-[11px] text-gray-500">Manage payroll</p>
                   </div>
+                  {payslipSummary && (
+                    <p className="text-sm font-bold text-blue-600 flex-shrink-0">
+                      {payslipSummary.total || 0} payslips
+                    </p>
+                  )}
                 </div>
-                {payslipSummary && (
-                  <p className="text-lg font-bold text-blue-600 ml-12">
-                    {payslipSummary.total || 0} payslips
-                  </p>
-                )}
               </Button>
 
               <Button
                 variant="outline"
-                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
                 onClick={() => navigate('/account-settings')}
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Settings size={20} className="text-purple-600" />
+                <div className="flex items-center gap-2 w-full">
+                  <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Settings size={16} className="text-purple-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-deep-600">Account Settings</p>
-                    <p className="text-xs text-gray-500">Company & payroll config</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-deep-600 text-sm">Account Settings</p>
+                    <p className="text-[11px] text-gray-500">Company & payroll config</p>
                   </div>
+                  <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
                 </div>
-                <ExternalLink size={20} className="text-gray-400 ml-auto" />
               </Button>
             </div>
           </Card>
@@ -538,7 +538,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {isMgmt && pendingLeaves.length > 0 && (
+      {isMgmt && (pendingLeaves || []).length > 0 && (
         <div className="mb-6">
           <Card>
             <h3 className="text-sm font-semibold text-deep-600 mb-3 flex items-center gap-2">
@@ -557,7 +557,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="text-deep-600">
-                  {pendingLeaves.map((l) => (
+                  {pendingLeaves && pendingLeaves.map((l) => (
                     <tr key={l.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
                       <td className="py-3 pr-4 font-medium">{l.employee_name}</td>
                       <td className="py-3 pr-4">{l.leave_type_name}{l.is_half_day ? ` (½${l.half_day_type ? `, ${l.half_day_type === 'morning' ? 'AM' : 'PM'}` : ''})` : ''}</td>
