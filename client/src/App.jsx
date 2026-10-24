@@ -14,6 +14,9 @@ import LeaveCalendar from './pages/LeaveCalendar'
 import Profile from './pages/Profile'
 import AdminLogs from './pages/AdminLogs'
 import Announcements from './pages/Announcements'
+import Expenses from './pages/Expenses'
+import Payslips from './pages/Payslips'
+import AccountSettings from './pages/AccountSettings'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 
@@ -46,6 +49,9 @@ export default function App() {
         <Route path="holidays" element={<ProtectedRoute roles={['Management']}><HolidaysPage /></ProtectedRoute>} />
         <Route path="announcements" element={<ProtectedRoute roles={['Management']}><Announcements /></ProtectedRoute>} />
         <Route path="employees" element={<ProtectedRoute roles={['Management']}><Employees /></ProtectedRoute>} />
+        <Route path="expenses" element={<ProtectedRoute roles={['Management']}><Expenses /></ProtectedRoute>} />
+        <Route path="payslips" element={<ProtectedRoute roles={['Management']}><Payslips /></ProtectedRoute>} />
+        <Route path="account-settings" element={<ProtectedRoute roles={['Management']}><AccountSettings /></ProtectedRoute>} />
         <Route path="calendar" element={<ProtectedRoute><LeaveCalendar /></ProtectedRoute>} />
         <Route path="admin-logs" element={<ProtectedRoute roles={['Management']}><AdminLogs /></ProtectedRoute>} />
         <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

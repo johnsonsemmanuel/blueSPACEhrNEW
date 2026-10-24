@@ -1,13 +1,12 @@
 // Shared SMS sending for BlueSPACE HR edge functions.
-// Provider: Intech SMS (https://doc.intech.sn). Endpoint/app-key/sender are
-// configurable via env so the provider can be swapped without code changes.
+// Provider: Intek SMS (https://inteksms.top). API key passed as Bearer token.
+// Endpoint configurable via env so the provider can be swapped without code changes.
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const DEFAULT_SMS_URL = "https://gateway.intechsms.sn/api/send-sms";
-const DEFAULT_SENDER = "BlueSPACE"; // Intech requires <= 11 chars
-const DEFAULT_COUNTRY_CODE = Deno.env.get("SMS_DEFAULT_COUNTRY_CODE") || "234";
+const DEFAULT_SMS_URL = "https://inteksms.top/api/v1/messages/send";
+const DEFAULT_SENDER_ID = Deno.env.get("INTEK_SMS_SENDER_ID") || "1"; // Use sender_id from approved list
 
-export function normalizePhone(raw: string | null | undefined, countryCode = DEFAULT_COUNTRY_CODE): string | null {
+export function normalizePhone(raw: string | null | undefined, countryCode = "234"): string | null {
   if (!raw) return null;
   let s = String(raw).trim().replace(/[\s().-]/g, "");
   if (!s) return null;
@@ -32,7 +31,7 @@ export function normalizePhone(raw: string | null | undefined, countryCode = DEF
 
   const digits = s.slice(1);
   if (!/^\d{7,15}$/.test(digits)) return null;
-  return s;
+  return s.replace("+", "");
 }
 
 export function buildSmsContent(type: string, data: Record<string, any>): string | null {
@@ -44,10 +43,23 @@ export function buildSmsContent(type: string, data: Record<string, any>): string
   if (type === "staff_returned") {
     return `${greet}${data.employee_name} is back from ${data.leave_type} leave as of today. - BlueSPACE HR`;
   }
+  if (type === "payment_reminder") {
+    let msg = `${greet}PAYMENT REMINDER: ${data.title} due ${data.due_date}`;
+    if (data.amount) msg += ` - Amount: ₵${data.amount}`;
+    if (data.description) msg += `. ${data.description}`;
+    msg += " - BlueSPACE HR";
+    return msg;
+  }
+  if (type === "expense_reminder") {
+    let msg = `${greet}EXPENSE REMINDER: ${data.category} - ${data.description} due ${data.due_date}`;
+    if (data.amount) msg += ` - ₵${data.amount}`;
+    msg += " - BlueSPACE HR";
+    return msg;
+  }
   return null;
 }
 
-// Sends a single SMS through Intech SMS. Returns a status: sent | skipped | failed.
+// Sends a single SMS through Intek SMS. Returns a status: sent | skipped | failed.
 export type SmsSendStatus = "sent" | "skipped" | "failed";
 
 export async function sendSms({
@@ -57,10 +69,9 @@ export async function sendSms({
   to: string;
   content: string;
 }): Promise<{ status: SmsSendStatus; error?: string }> {
-  const appKey = Deno.env.get("INTECH_SMS_APP_KEY");
-  if (!appKey) {
-    // SMS is optional/deferred: skip quietly rather than logging a failure.
-    console.log(`[sms] Skipped (no INTECH_SMS_APP_KEY): to=${to}`);
+  const apiKey = Deno.env.get("INTEK_SMS_API_KEY");
+  if (!apiKey) {
+    console.log(`[sms] Skipped (no INTEK_SMS_API_KEY): to=${to}`);
     return { status: "skipped" };
   }
 
@@ -69,25 +80,37 @@ export async function sendSms({
     return { status: "failed", error: `Invalid phone number: ${to}` };
   }
 
-  const sender = (Deno.env.get("INTECH_SMS_SENDER") || DEFAULT_SENDER).slice(0, 11);
-  const url = Deno.env.get("INTECH_SMS_URL") || DEFAULT_SMS_URL;
+  const senderId = Deno.env.get("INTEK_SMS_SENDER_ID") || DEFAULT_SENDER_ID;
+  const url = Deno.env.get("INTEK_SMS_URL") || DEFAULT_SMS_URL;
 
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        app_key: appKey,
-        sender,
-        content,
-        msisdn: [msisdn],
+        sender_id: parseInt(senderId),
+        message: content,
+        recipients: [msisdn],
       }),
     });
     const body = await res.json().catch(() => ({}));
-    // Intech returns { code, error: boolean, msg, data }
-    const failed = body?.error === true || (!res.ok && body?.error !== false);
-    if (failed) {
-      return { status: "failed", error: body?.msg || `HTTP ${res.status}` };
+    if (res.status === 401) {
+      return { status: "failed", error: "Invalid API key" };
+    }
+    if (res.status === 402) {
+      return { status: "failed", error: "Insufficient SMS credits" };
+    }
+    if (res.status === 403) {
+      return { status: "failed", error: "Sender ID not approved" };
+    }
+    if (res.status === 422) {
+      return { status: "failed", error: body?.message || "Validation error" };
+    }
+    if (!res.ok) {
+      return { status: "failed", error: body?.message || `HTTP ${res.status}` };
     }
     return { status: "sent" };
   } catch (err) {

@@ -9,6 +9,9 @@ const leaveRoutes = require('./routes/leaves');
 const leaveTypeRoutes = require('./routes/leaveTypes');
 const employeeRoutes = require('./routes/employees');
 const departmentRoutes = require('./routes/departments');
+const expenseRoutes = require('./routes/expenses');
+const payslipRoutes = require('./routes/payslips');
+const managementRoutes = require('./routes/management');
 const runMigrations = require('./migrations/run');
 
 const app = express();
@@ -29,6 +32,9 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/leave-types', leaveTypeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/payslips', payslipRoutes);
+app.use('/api/management', managementRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {

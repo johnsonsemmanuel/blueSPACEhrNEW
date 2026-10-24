@@ -1,0 +1,330 @@
+import { useState, useEffect, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { Receipt, Plus, Filter, Download, ChevronDown, ChevronUp, Trash2, Edit, Calendar, CreditCard, DollarSign, BarChart2, X, Search, MoreVertical, AlertTriangle, Bell } from 'lucide-react'
+import api from '../lib/api'
+import { useAuth } from '../context/AuthContext'
+import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+import Select from '../components/ui/Select'
+import Badge from '../components/ui/Badge'
+import Modal from '../components/ui/Modal'
+import toast from 'react-hot-toast'
+
+const CATEGORIES = ['Office Supplies', 'Utilities', 'Travel', 'Meals', 'Equipment', 'Marketing', 'Maintenance', 'Other']
+const PAYMENT_METHODS = ['Cash', 'Card', 'Bank Transfer', 'Mobile Money']
+
+export default function Expenses() {
+  const { user } = useAuth()
+  const isMgmt = user?.type === 'Management'
+  const [expenses, setExpenses] = useState([])
+  const [summary, setSummary] = useState(null)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({})
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', category: '', branchId: '', departmentId: '' })
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [showFilters, setShowFilters] = useState(false)
+  const [branches, setBranches] = useState([])
+  const [departments, setDepartments] = useState([])
+
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ page, limit: 50, ...filters })
+      const [expRes, sumRes, catRes, brRes, deptRes] = await Promise.all([
+        api.get(`/expenses?${params}`),
+        api.get(`/expenses/summary?${params}`),
+        api.get('/expenses/categories'),
+        api.get('/employees/branches'),
+        api.get('/employees/departments'),
+      ])
+      setExpenses(expRes.data.data)
+      setTotalPages(Math.ceil(expRes.data.total / 50))
+      setSummary(sumRes.data)
+      setCategories(catRes.data)
+      setBranches(brRes.data)
+      setDepartments(deptRes.data)
+    } catch (err) {
+      console.error('Fetch error:', err)
+      toast.error('Failed to load expenses')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchData() }, [page, filters])
+
+  const resetForm = () => ({
+    date: new Date().toISOString().split('T')[0],
+    category: '',
+    description: '',
+    amount: '',
+    payment_method: 'Cash',
+    receipt_url: '',
+    branch_id: '',
+    department_id: '',
+  })
+
+  const openAdd = () => { setForm(resetForm()); setEditing(null); setModalOpen(true) }
+  const openEdit = (exp) => { setForm({ ...exp, amount: String(exp.amount) }); setEditing(exp); setModalOpen(true) }
+  const closeModal = () => { setModalOpen(false); setEditing(null); setForm({}) }
+
+  const handleSave = async () => {
+    if (!form.date || !form.category || !form.description || !form.amount) {
+      toast.error('Please fill all required fields')
+      return
+    }
+    setSaving(true)
+    try {
+      if (editing) {
+        await api.put(`/expenses/${editing.id}`, form)
+        toast.success('Expense updated')
+      } else {
+        await api.post('/expenses', form)
+        toast.success('Expense added')
+      }
+      closeModal()
+      fetchData()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this expense?')) return
+    try {
+      await api.delete(`/expenses/${id}`)
+      toast.success('Expense deleted')
+      fetchData()
+    } catch (err) {
+      toast.error('Failed to delete')
+    }
+  }
+
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams(filters)
+      const res = await fetch(`/api/expenses/export?${params}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `expenses-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+    } catch (err) {
+      toast.error('Export failed')
+    }
+  }
+
+  const today = new Date().toISOString().split('T')[0]
+  const thisWeekStart = new Date(Date.now() - 6 * 86400000).toISOString().split('T')[0]
+  const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+
+  const summaryCards = useMemo(() => [
+    { label: 'Today', value: summary?.byCategory?.find(c => c.category === 'Today')?.total || 0, icon: Calendar, color: 'bg-brand-600' },
+    { label: 'This Week', value: summary?.byMonth?.[0]?.total || 0, icon: Calendar, color: 'bg-blue-600' },
+    { label: 'This Month', value: summary?.byMonth?.find(m => m.month === today.slice(0,7))?.total || 0, icon: Calendar, color: 'bg-emerald-600' },
+    { label: 'Total', value: summary?.total || 0, icon: DollarSign, color: 'bg-purple-600' },
+  ], [summary, today])
+
+  return (
+    <div className="w-full">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
+              <Receipt size={18} className="text-deep-600" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-deep-600">Daily Expenses</h1>
+              <p className="text-xs text-gray-500">{expenses.length} expenses • {summary?.total?.toLocaleString() || 0} total</p>
+            </div>
+          </div>
+          {isMgmt && (
+            <Button onClick={openAdd}>
+              <Plus size={15} /> Add Expense
+            </Button>
+          )}
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {summaryCards.map((card, i) => (
+            <Card key={i} className="hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.color}`}>
+                  <card.icon size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{card.label}</p>
+                  <p className="text-xl font-bold text-deep-600">₵{Number(card.value).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-deep-600 flex items-center gap-2">
+              <Filter size={14} /> Filters
+            </h3>
+            <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+              {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </Button>
+          </div>
+          {showFilters && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <Input label="From Date" type="date" value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} />
+              <Input label="To Date" type="date" value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} />
+              <Select label="Category" placeholder="All categories" value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})}
+                options={categories.map(c => ({value: c, label: c}))} />
+              <Select label="Branch" placeholder="All branches" value={filters.branchId} onChange={e => setFilters({...filters, branchId: e.target.value})}
+                options={branches.map(b => ({value: b.id, label: b.name}))} />
+              <Select label="Department" placeholder="All departments" value={filters.departmentId} onChange={e => setFilters({...filters, departmentId: e.target.value})}
+                options={departments.map(d => ({value: d.id, label: d.name}))} />
+            </div>
+          )}
+        </Card>
+
+        {/* Category Breakdown */}
+        {summary?.byCategory?.length > 0 && (
+          <Card className="mb-6">
+            <h3 className="text-sm font-semibold text-deep-600 mb-3 flex items-center gap-2">
+              <BarChart2 size={14} /> By Category
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              {summary.byCategory.slice(0, 8).map((cat) => (
+                <div key={cat.category} className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs font-medium text-deep-600 truncate">{cat.category}</p>
+                  <p className="text-lg font-bold text-brand-600">₵{Number(cat.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Expenses Table */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-deep-600">All Expenses</h3>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                <Download size={14} /> Export CSV
+              </Button>
+            </div>
+          </div>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="h-6 w-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : expenses.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Receipt size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No expenses recorded</p>
+              {isMgmt && <Button size="sm" onClick={openAdd} className="mt-3">Add First Expense</Button>}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 font-medium uppercase tracking-wider">
+                    <th className="pb-3 pr-4">Date</th>
+                    <th className="pb-3 pr-4">Category</th>
+                    <th className="pb-3 pr-4">Description</th>
+                    <th className="pb-3 pr-4">Amount</th>
+                    <th className="pb-3 pr-4">Payment</th>
+                    <th className="pb-3 pr-4">Branch / Dept</th>
+                    <th className="pb-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-deep-600">
+                  {expenses.map((exp) => (
+                    <tr key={exp.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 pr-4 text-gray-500">{new Date(exp.date).toLocaleDateString('en-GB')}</td>
+                      <td className="py-3 pr-4">
+                        <Badge variant="info" className="text-[10px]">{exp.category}</Badge>
+                      </td>
+                      <td className="py-3 pr-4 max-w-xs truncate" title={exp.description}>{exp.description}</td>
+                      <td className="py-3 pr-4 font-semibold">₵{Number(exp.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                      <td className="py-3 pr-4 text-gray-500">{exp.payment_method}</td>
+                      <td className="py-3 pr-4 text-gray-500 text-xs">
+                        {exp.branch_name && <span>{exp.branch_name}</span>}
+                        {exp.branch_name && exp.department_name && <span className="mx-1">/</span>}
+                        {exp.department_name && <span>{exp.department_name}</span>}
+                        {!exp.branch_name && !exp.department_name && <span className="text-gray-400">-</span>}
+                      </td>
+                      <td className="py-3">
+                        {isMgmt && (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => openEdit(exp)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded" title="Edit">
+                              <Edit size={13} />
+                            </button>
+                            <button onClick={() => handleDelete(exp.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-500">Page {page} of {totalPages}</p>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                  <ChevronDown size={14} />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                  <ChevronUp size={14} />
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Add/Edit Modal */}
+        <Modal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Expense' : 'Add Expense'} size="lg">
+          <form onSubmit={e => { e.preventDefault(); handleSave() }} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input label="Date *" type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
+              <Select label="Category *" placeholder="Select category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} required
+                options={CATEGORIES.map(c => ({value: c, label: c}))} />
+              <Input label="Description *" placeholder="Expense description" value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
+              <Input label="Amount *" type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
+              <Select label="Payment Method" placeholder="Select method" value={form.payment_method} onChange={e => setForm({...form, payment_method: e.target.value})}
+                options={PAYMENT_METHODS.map(p => ({value: p, label: p}))} />
+              <Input label="Receipt URL" type="url" placeholder="https://..." value={form.receipt_url} onChange={e => setForm({...form, receipt_url: e.target.value})} />
+              <Select label="Branch" placeholder="Select branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
+                options={branches.map(b => ({value: b.id, label: b.name}))} />
+              <Select label="Department" placeholder="Select department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
+                options={departments.map(d => ({value: d.id, label: d.name}))} />
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+              <Button type="button" variant="outline" onClick={closeModal}><X size={14} /> Cancel</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Saving...' : (editing ? 'Update' : 'Create')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      </motion.div>
+    </div>
+  )
+}

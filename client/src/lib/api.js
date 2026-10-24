@@ -1287,31 +1287,375 @@ const ROUTES = {
     const data = await supabaseQuery('audit_logs', { select: '*', order: { col: 'created_at', asc: false } })
     return { data: data || [] }
   },
-}
 
-async function countWorkingDays(start, end) {
-  const dates = []
-  const current = new Date(start)
-  const last = new Date(end)
-  while (current <= last) {
-    dates.push(current.toISOString().split('T')[0])
-    current.setDate(current.getDate() + 1)
-  }
-  const holidays = await supabaseQuery('holidays', { select: 'date, end_date' })
-  const holidaySet = new Set()
-  ;(holidays || []).forEach(h => {
-    const hStart = new Date(h.date)
-    const hEnd = h.end_date ? new Date(h.end_date) : hStart
-    const d = new Date(hStart)
-    while (d <= hEnd) {
-      holidaySet.add(d.toISOString().split('T')[0])
-      d.setDate(d.getDate() + 1)
+  // Expenses
+  'GET /expenses': async (params) => {
+    const url = new URLSearchParams(params || '')
+    let query = supabase.from('daily_expenses').select('*, branch:branches!daily_expenses_branch_id_fkey(id,name), department:departments!daily_expenses_department_id_fkey(id,name)')
+    const startDate = url.get('startDate')
+    const endDate = url.get('endDate')
+    const category = url.get('category')
+    const branchId = url.get('branchId')
+    const departmentId = url.get('departmentId')
+    const page = parseInt(url.get('page')) || 1
+    const limit = parseInt(url.get('limit')) || 50
+    if (startDate) query = query.gte('date', startDate)
+    if (endDate) query = query.lte('date', endDate)
+    if (category) query = query.eq('category', category)
+    if (branchId) query = query.eq('branch_id', branchId)
+    if (departmentId) query = query.eq('department_id', departmentId)
+    query = query.order('date', { ascending: false }).order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1)
+    const { data, error, count } = await query
+    if (error) throw error
+    return { data: data || [], total: count || 0, page, limit }
+  },
+
+  'GET /expenses/summary': async (params) => {
+    const url = new URLSearchParams(params || '')
+    const startDate = url.get('startDate')
+    const endDate = url.get('endDate')
+    const branchId = url.get('branchId')
+    const departmentId = url.get('departmentId')
+    let filters = []
+    if (startDate) filters.push({ op: 'gte', col: 'date', val: startDate })
+    if (endDate) filters.push({ op: 'lte', col: 'date', val: endDate })
+    if (branchId) filters.push({ op: 'eq', col: 'branch_id', val: branchId })
+    if (departmentId) filters.push({ op: 'eq', col: 'department_id', val: departmentId })
+
+    const expenses = await supabaseQuery('daily_expenses', { select: 'category, amount, payment_method, date', filters })
+    const total = (expenses || []).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+    const count = (expenses || []).length
+
+    const byCategory = {}
+    const byMonth = {}
+    const byPaymentMethod = {}
+    ;(expenses || []).forEach(e => {
+      byCategory[e.category] = (byCategory[e.category] || 0) + (parseFloat(e.amount) || 0)
+      const month = e.date.slice(0, 7)
+      byMonth[month] = (byMonth[month] || 0) + (parseFloat(e.amount) || 0)
+      byPaymentMethod[e.payment_method] = (byPaymentMethod[e.payment_method] || 0) + (parseFloat(e.amount) || 0)
+    })
+
+    const recent = await supabaseQuery('daily_expenses', {
+      select: '*, branch:branches!daily_expenses_branch_id_fkey(id,name), department:departments!daily_expenses_department_id_fkey(id,name)',
+      filters, order: { col: 'date', asc: false }, limit: 10
+    })
+
+    return {
+      total, count,
+      byCategory: Object.entries(byCategory).map(([category, total]) => ({ category, total })),
+      byMonth: Object.entries(byMonth).map(([month, total]) => ({ month, total })).sort((a,b) => b.month.localeCompare(a.month)),
+      byPaymentMethod: Object.entries(byPaymentMethod).map(([payment_method, total]) => ({ payment_method, total })),
+      recent: recent || []
     }
-  })
-  return dates.filter(d => {
-    const day = new Date(d).getDay()
-    return day !== 0 && day !== 6 && !holidaySet.has(d)
-  }).length || 1
+  },
+
+  'GET /expenses/categories': async () => {
+    const data = await supabaseQuery('daily_expenses', { select: 'category', order: { col: 'category', asc: true } })
+    return { data: [...new Set((data || []).map(d => d.category))] }
+  },
+
+  'POST /expenses': async (body) => {
+    const user = getUser()
+    const { data, error } = await supabase.from('daily_expenses').insert({
+      date: body.date,
+      category: body.category,
+      description: body.description,
+      amount: parseFloat(body.amount),
+      payment_method: body.payment_method || 'Cash',
+      receipt_url: body.receipt_url || null,
+      branch_id: body.branch_id ? parseInt(body.branch_id) : null,
+      department_id: body.department_id ? parseInt(body.department_id) : null,
+      created_by: user?.id || null,
+    }).select('*, branch:branches!daily_expenses_branch_id_fkey(id,name), department:departments!daily_expenses_department_id_fkey(id,name)').single()
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data }
+  },
+
+  'PUT /expenses/:id': async (id, body) => {
+    const update = { updated_at: new Date().toISOString() }
+    if (body.date) update.date = body.date
+    if (body.category) update.category = body.category
+    if (body.description !== undefined) update.description = body.description
+    if (body.amount !== undefined) update.amount = parseFloat(body.amount)
+    if (body.payment_method !== undefined) update.payment_method = body.payment_method
+    if (body.receipt_url !== undefined) update.receipt_url = body.receipt_url
+    if (body.branch_id !== undefined) update.branch_id = body.branch_id ? parseInt(body.branch_id) : null
+    if (body.department_id !== undefined) update.department_id = body.department_id ? parseInt(body.department_id) : null
+    const { error } = await supabase.from('daily_expenses').update(update).eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    const { data } = await supabase.from('daily_expenses').select('*, branch:branches!daily_expenses_branch_id_fkey(id,name), department:departments!daily_expenses_department_id_fkey(id,name)').eq('id', parseInt(id)).single()
+    return { data }
+  },
+
+  'DELETE /expenses/:id': async (id) => {
+    const { error } = await supabase.from('daily_expenses').delete().eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data: { success: true } }
+  },
+
+  // Payslips
+  'GET /payslips': async (params) => {
+    const url = new URLSearchParams(params || '')
+    let query = supabase.from('payslips').select('*, employee:employees!payslips_employee_id_fkey(id,name,employee_id,department:departments!employees_department_id_fkey(id,name))')
+    const employeeId = url.get('employeeId')
+    const periodStart = url.get('periodStart')
+    const periodEnd = url.get('periodEnd')
+    const status = url.get('status')
+    const page = parseInt(url.get('page')) || 1
+    const limit = parseInt(url.get('limit')) || 50
+    if (employeeId) query = query.eq('employee_id', employeeId)
+    if (periodStart) query = query.gte('period_start', periodStart)
+    if (periodEnd) query = query.lte('period_end', periodEnd)
+    if (status) query = query.eq('status', status)
+    query = query.order('period_start', { ascending: false }).order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1)
+    const { data, error, count } = await query
+    if (error) throw error
+    return { data: data || [], total: count || 0, page, limit }
+  },
+
+  'GET /payslips/employee/:employeeId': async (employeeId) => {
+    const { data, error } = await supabase.from('payslips').select('*').eq('employee_id', parseInt(employeeId)).order('period_start', { ascending: false })
+    if (error) throw error
+    return { data: data || [] }
+  },
+
+  'GET /payslips/summary': async (params) => {
+    const url = new URLSearchParams(params || '')
+    const periodStart = url.get('periodStart')
+    const periodEnd = url.get('periodEnd')
+    let filters = []
+    if (periodStart) filters.push({ op: 'gte', col: 'period_start', val: periodStart })
+    if (periodEnd) filters.push({ op: 'lte', col: 'period_end', val: periodEnd })
+
+    const payslips = await supabaseQuery('payslips', { select: 'status, gross_pay, net_pay, total_deductions, employee_id, period_start', filters })
+    const total = (payslips || []).length
+    const draft = (payslips || []).filter(p => p.status === 'Draft').length
+    const generated = (payslips || []).filter(p => p.status === 'Generated').length
+    const paid = (payslips || []).filter(p => p.status === 'Paid').length
+    const cancelled = (payslips || []).filter(p => p.status === 'Cancelled').length
+    const totalGross = (payslips || []).reduce((sum, p) => sum + (parseFloat(p.gross_pay) || 0), 0)
+    const totalNet = (payslips || []).reduce((sum, p) => sum + (parseFloat(p.net_pay) || 0), 0)
+    const totalDeductions = (payslips || []).reduce((sum, p) => sum + (parseFloat(p.total_deductions) || 0), 0)
+
+    // By department would need a join - simplified for now
+    return { total, draft, generated, paid, cancelled, total_gross: totalGross, total_net: totalNet, total_deductions: totalDeductions, byDepartment: [], byStatus: [] }
+  },
+
+  'POST /payslips/generate': async (body) => {
+    // This will call the edge function or use the server route
+    const user = getUser()
+    const response = await fetch(`${EDGE_FUNCTION_URL}/payslips/generate`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const data = await response.json()
+    if (!response.ok) throw { response: { status: response.status, data } }
+    return { data }
+  },
+
+  'PUT /payslips/:id/status': async (id, body) => {
+    const { error } = await supabase.from('payslips').update({
+      status: body.status,
+      notes: body.notes || null,
+      paid_at: body.status === 'Paid' ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    }).eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    const { data } = await supabase.from('payslips').select('*, employee:employees!payslips_employee_id_fkey(id,name,employee_id)').eq('id', parseInt(id)).single()
+    return { data }
+  },
+
+  'DELETE /payslips/:id': async (id) => {
+    const { error } = await supabase.from('payslips').delete().eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data: { success: true } }
+  },
+
+  // Employee Salaries
+  'GET /salaries': async () => {
+    const data = await supabaseQuery('employee_salaries', {
+      select: '*, employee:employees!employee_salaries_employee_id_fkey(id,name,employee_id,department:departments!employees_department_id_fkey(id,name))',
+      order: { col: 'employee_id', asc: true }
+    })
+    return { data: data || [] }
+  },
+
+  'GET /salaries/:employeeId': async (employeeId) => {
+    const { data, error } = await supabase.from('employee_salaries').select('*, employee:employees!employee_salaries_employee_id_fkey(id,name,employee_id)').eq('employee_id', parseInt(employeeId)).single()
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data }
+  },
+
+  'POST /salaries': async (body) => {
+    const user = getUser()
+    const { employee_id, basic_salary, housing_allowance, transport_allowance, other_allowances, overtime_rate, tax_exempt, effective_from } = body
+    const { data: existing } = await supabase.from('employee_salaries').select('id').eq('employee_id', parseInt(employee_id)).single()
+    let result
+    if (existing) {
+      const { data, error } = await supabase.from('employee_salaries').update({
+        basic_salary: parseFloat(basic_salary),
+        housing_allowance: parseFloat(housing_allowance) || 0,
+        transport_allowance: parseFloat(transport_allowance) || 0,
+        other_allowances: parseFloat(other_allowances) || 0,
+        overtime_rate: overtime_rate ? parseFloat(overtime_rate) : null,
+        tax_exempt: tax_exempt ? true : false,
+        effective_from: effective_from || new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString()
+      }).eq('employee_id', parseInt(employee_id)).select().single()
+      if (error) throw { response: { data: { error: error.message } } }
+      result = data
+    } else {
+      const { data, error } = await supabase.from('employee_salaries').insert({
+        employee_id: parseInt(employee_id),
+        basic_salary: parseFloat(basic_salary),
+        housing_allowance: parseFloat(housing_allowance) || 0,
+        transport_allowance: parseFloat(transport_allowance) || 0,
+        other_allowances: parseFloat(other_allowances) || 0,
+        overtime_rate: overtime_rate ? parseFloat(overtime_rate) : null,
+        tax_exempt: tax_exempt ? true : false,
+        effective_from: effective_from || new Date().toISOString().split('T')[0],
+        created_by: user?.id || null,
+      }).select().single()
+      if (error) throw { response: { data: { error: error.message } } }
+      result = data
+    }
+    return { data: result }
+  },
+
+  // Management Settings
+  'GET /management/settings': async () => {
+    const data = await supabaseQuery('management_settings', { select: '*', order: { col: 'setting_key', asc: true } })
+    return { data: data || [] }
+  },
+
+  'PUT /management/settings/:key': async (key, body) => {
+    const user = getUser()
+    const valueJson = typeof body.setting_value === 'object' ? JSON.stringify(body.setting_value) : body.setting_value
+    const { data: existing } = await supabase.from('management_settings').select('id').eq('setting_key', key).single()
+    if (existing) {
+      const { data, error } = await supabase.from('management_settings').update({
+        setting_value: valueJson,
+        description: body.description,
+        updated_at: new Date().toISOString()
+      }).eq('setting_key', key).select().single()
+      if (error) throw { response: { data: { error: error.message } } }
+      return { data }
+    } else {
+      const { data, error } = await supabase.from('management_settings').insert({
+        setting_key: key,
+        setting_value: valueJson,
+        description: body.description || '',
+        created_by: user?.id || null,
+      }).select().single()
+      if (error) throw { response: { data: { error: error.message } } }
+      return { data }
+    }
+  },
+
+  'POST /management/settings/init-defaults': async () => {
+    const user = getUser()
+    // This would call the server route
+    const response = await fetch(`${EDGE_FUNCTION_URL}/management/settings/init-defaults`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' }
+    })
+    const data = await response.json()
+    if (!response.ok) throw { response: { status: response.status, data } }
+    return { data }
+  },
+
+  // Payment Reminders
+  'GET /management/reminders': async (params) => {
+    const url = new URLSearchParams(params || '')
+    let query = supabase.from('payment_reminders').select('*, branch:branches!payment_reminders_branch_id_fkey(id,name), department:departments!payment_reminders_department_id_fkey(id,name)')
+    const status = url.get('status')
+    const category = url.get('category')
+    const startDate = url.get('startDate')
+    const endDate = url.get('endDate')
+    if (status) query = query.eq('status', status)
+    if (category) query = query.eq('category', category)
+    if (startDate) query = query.gte('due_date', startDate)
+    if (endDate) query = query.lte('due_date', endDate)
+    query = query.order('due_date', { ascending: true }).order('created_at', { ascending: false })
+    const { data, error } = await query
+    if (error) throw error
+    return { data: data || [] }
+  },
+
+  'GET /management/reminders/upcoming': async (params) => {
+    const days = parseInt((params || '').split('days=')[1]?.split('&')[0]) || 7
+    const today = new Date().toISOString().split('T')[0]
+    const future = new Date()
+    future.setDate(future.getDate() + days)
+    const futureStr = future.toISOString().split('T')[0]
+    const { data, error } = await supabase.from('payment_reminders').select('*, branch:branches!payment_reminders_branch_id_fkey(id,name), department:departments!payment_reminders_department_id_fkey(id,name)').eq('status', 'Pending').gte('due_date', today).lte('due_date', futureStr).order('due_date', { ascending: true })
+    if (error) throw error
+    return { data: data || [] }
+  },
+
+  'POST /management/reminders': async (body) => {
+    const user = getUser()
+    const { data, error } = await supabase.from('payment_reminders').insert({
+      title: body.title,
+      description: body.description || null,
+      amount: body.amount ? parseFloat(body.amount) : null,
+      due_date: body.due_date,
+      category: body.category || 'General',
+      branch_id: body.branch_id ? parseInt(body.branch_id) : null,
+      department_id: body.department_id ? parseInt(body.department_id) : null,
+      reminder_days_before: body.reminder_days_before || 3,
+      related_type: body.related_type || null,
+      related_id: body.related_id ? parseInt(body.related_id) : null,
+      created_by: user?.id || null,
+    }).select('*, branch:branches!payment_reminders_branch_id_fkey(id,name), department:departments!payment_reminders_department_id_fkey(id,name)').single()
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data }
+  },
+
+  'PUT /management/reminders/:id': async (id, body) => {
+    const update = { updated_at: new Date().toISOString() }
+    if (body.title !== undefined) update.title = body.title
+    if (body.description !== undefined) update.description = body.description
+    if (body.amount !== undefined) update.amount = body.amount ? parseFloat(body.amount) : null
+    if (body.due_date !== undefined) update.due_date = body.due_date
+    if (body.category !== undefined) update.category = body.category
+    if (body.branch_id !== undefined) update.branch_id = body.branch_id ? parseInt(body.branch_id) : null
+    if (body.department_id !== undefined) update.department_id = body.department_id ? parseInt(body.department_id) : null
+    if (body.reminder_days_before !== undefined) update.reminder_days_before = body.reminder_days_before
+    if (body.status !== undefined) update.status = body.status
+    if (body.related_type !== undefined) update.related_type = body.related_type
+    if (body.related_id !== undefined) update.related_id = body.related_id ? parseInt(body.related_id) : null
+    const { error } = await supabase.from('payment_reminders').update(update).eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    const { data } = await supabase.from('payment_reminders').select('*, branch:branches!payment_reminders_branch_id_fkey(id,name), department:departments!payment_reminders_department_id_fkey(id,name)').eq('id', parseInt(id)).single()
+    return { data }
+  },
+
+  'POST /management/reminders/:id/notify': async (id) => {
+    const response = await fetch(`${EDGE_FUNCTION_URL}/management/reminders/${id}/notify`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' }
+    })
+    const data = await response.json()
+    if (!response.ok) throw { response: { status: response.status, data } }
+    return { data }
+  },
+
+  'GET /management/reminders/overdue': async () => {
+    const { data, error } = await supabase.from('payment_reminders').select('*, branch:branches!payment_reminders_branch_id_fkey(id,name), department:departments!payment_reminders_department_id_fkey(id,name)').eq('status', 'Pending').lt('due_date', new Date().toISOString().split('T')[0]).order('due_date', { ascending: true })
+    if (error) throw error
+    return { data: data || [] }
+  },
+
+  'DELETE /management/reminders/:id': async (id) => {
+    const { error } = await supabase.from('payment_reminders').delete().eq('id', parseInt(id))
+    if (error) throw { response: { data: { error: error.message } } }
+    return { data: { success: true } }
+  },
 }
 
 function matchRoute(method, url) {

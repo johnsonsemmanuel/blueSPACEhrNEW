@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2, MoreHorizontal, ScrollText, MapPin, CalendarOff, Megaphone } from 'lucide-react'
+import { LayoutDashboard, CalendarPlus, CalendarCheck, FileText, Users, LogOut, X, Settings, CalendarDays, User, Building2, MoreHorizontal, ScrollText, MapPin, CalendarOff, Megaphone, Receipt, CreditCard } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = {
@@ -21,6 +21,9 @@ const navItems = {
     { to: '/holidays', icon: CalendarOff, label: 'Holidays' },
     { to: '/announcements', icon: Megaphone, label: 'Announcements' },
     { to: '/admin-logs', icon: ScrollText, label: 'System Logs' },
+    { to: '/expenses', icon: Receipt, label: 'Expenses' },
+    { to: '/payslips', icon: CreditCard, label: 'Payslips' },
+    { to: '/account-settings', icon: Settings, label: 'Account Settings' },
     { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
     { to: '/profile', icon: User, label: 'Profile' },
   ],

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle, Megaphone, Send, Plus } from 'lucide-react'
+import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle, Megaphone, Send, Plus, Receipt, CreditCard, Settings, ExternalLink } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
@@ -51,6 +51,8 @@ export default function Dashboard() {
   const [holidays, setHolidays] = useState([])
   const [handovers, setHandovers] = useState([])
   const [announcements, setAnnouncements] = useState([])
+  const [expenseSummary, setExpenseSummary] = useState(null)
+  const [payslipSummary, setPayslipSummary] = useState(null)
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [announcementForm, setAnnouncementForm] = useState({ title: '', body: '' })
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
@@ -61,6 +63,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (isMgmt) {
       api.get('/leaves/stats').then(r => setStats(r.data)).catch(() => {})
+      api.get('/expenses/summary').then(r => setExpenseSummary(r.data)).catch(() => {})
+      api.get('/payslips/summary').then(r => setPayslipSummary(r.data)).catch(() => {})
     } else {
       api.get('/leaves/my-stats').then(r => setMyStats(r.data)).catch(() => {})
     }
@@ -341,6 +345,77 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+          </Card>
+        </div>
+      )}
+
+      {isMgmt && (
+        <div className="mb-6">
+          <Card>
+            <h3 className="text-sm font-semibold text-deep-600 mb-4 flex items-center gap-2">
+              <TrendingUp size={14} className="text-purple-600" />
+              Quick Actions
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                onClick={() => navigate('/expenses')}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Receipt size={20} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-deep-600">Expenses</p>
+                    <p className="text-xs text-gray-500">Track daily expenses</p>
+                  </div>
+                </div>
+                {expenseSummary && (
+                  <p className="text-lg font-bold text-amber-600 ml-12">
+                    ₵{Number(expenseSummary.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                  </p>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                onClick={() => navigate('/payslips')}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <CreditCard size={20} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-deep-600">Payslips</p>
+                    <p className="text-xs text-gray-500">Manage payroll</p>
+                  </div>
+                </div>
+                {payslipSummary && (
+                  <p className="text-lg font-bold text-blue-600 ml-12">
+                    {payslipSummary.total || 0} payslips
+                  </p>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-start justify-center gap-2 text-left hover:border-brand-300 hover:bg-brand-50"
+                onClick={() => navigate('/account-settings')}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <Settings size={20} className="text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-deep-600">Account Settings</p>
+                    <p className="text-xs text-gray-500">Company & payroll config</p>
+                  </div>
+                </div>
+                <ExternalLink size={20} className="text-gray-400 ml-auto" />
+              </Button>
+            </div>
           </Card>
         </div>
       )}
