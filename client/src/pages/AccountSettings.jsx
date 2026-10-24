@@ -365,14 +365,14 @@ export default function AccountSettings() {
                 </Button>
               </div>
 
-              {upcomingReminders && upcomingReminders.length > 0 && (
+              {upcomingReminders && Array.isArray(upcomingReminders) && upcomingReminders.length > 0 && (
                 <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle size={16} className="text-amber-600" />
                     <p className="text-sm font-medium text-amber-800">{upcomingReminders.length} upcoming reminder(s)</p>
                   </div>
                   <div className="space-y-1">
-                    {upcomingReminders && upcomingReminders.map(r => (
+                    {upcomingReminders && Array.isArray(upcomingReminders) && upcomingReminders.map(r => (
                       <div key={r.id} className="flex items-center justify-between text-sm">
                         <span className="text-amber-700">{r.title} - due {new Date(r.due_date).toLocaleDateString('en-GB')}</span>
                         {r.amount && <span className="font-medium">₵{Number(r.amount).toLocaleString()}</span>}
