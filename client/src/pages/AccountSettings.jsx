@@ -330,7 +330,7 @@ export default function AccountSettings() {
                 <DollarSign size={14} /> Expense Categories
               </h3>
               <div className="flex flex-wrap gap-2">
-                {(getSetting('expense_categories') || []).map((cat, i) => (
+                {((getSetting('expense_categories') || [])).map((cat, i) => (
                   <Badge key={i} variant="info" className="gap-1">
                     {cat}
                     <button onClick={() => {
