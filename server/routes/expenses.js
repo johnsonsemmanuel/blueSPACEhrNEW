@@ -149,7 +149,66 @@ router.get('/categories', authenticate, authorize('Management'), async (req, res
   }
 });
 
-router.get('/export', authenticate, authorize('Management'), async (req, res) => {
+router.get('/due', authenticate, authorize('Management'), async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const [rows] = await pool.query(
+      `SELECT de.*, b.name AS branch_name, d.name AS department_name
+       FROM daily_expenses de
+       LEFT JOIN branches b ON de.branch_id = b.id
+       LEFT JOIN departments d ON de.department_id = d.id
+       WHERE de.status IN ('Pending', 'Overdue')
+       AND de.due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+       ORDER BY de.due_date ASC`,
+      [days]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Due expenses fetch error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/overdue', authenticate, authorize('Management'), async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT de.*, b.name AS branch_name, d.name AS department_name
+       FROM daily_expenses de
+       LEFT JOIN branches b ON de.branch_id = b.id
+       LEFT JOIN departments d ON de.department_id = d.id
+       WHERE de.status IN ('Pending', 'Overdue')
+       AND de.due_date < CURDATE()
+       ORDER BY de.due_date ASC`,
+      []
+    );
+    // Mark as overdue
+    await pool.query(
+      "UPDATE daily_expenses SET status = 'Overdue', updated_at = NOW() WHERE status = 'Pending' AND due_date < CURDATE()"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Overdue expenses fetch error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/recurring', authenticate, authorize('Management'), async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT de.*, b.name AS branch_name, d.name AS department_name
+       FROM daily_expenses de
+       LEFT JOIN branches b ON de.branch_id = b.id
+       LEFT JOIN departments d ON de.department_id = d.id
+       WHERE de.is_recurring = 1
+       ORDER BY de.next_due_date ASC`,
+      []
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Recurring expenses fetch error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
   try {
     const { startDate, endDate, category, branchId, departmentId } = req.query;
     let query = `
