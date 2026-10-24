@@ -22,7 +22,12 @@ export default function Expenses() {
   const [categories, setCategories] = useState([])
   const [reminders, setReminders] = useState([])
   const [showReminderModal, setShowReminderModal] = useState(false)
-  const [reminderForm, setReminderForm] = useState({}) 
+  const [reminderForm, setReminderForm] = useState({})
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [showFilters, setShowFilters] = useState(false)
+  const [branches, setBranches] = useState([])
+  const [departments, setDepartments] = useState([]) 
 
   const fetchData = async () => {
     setLoading(true)
