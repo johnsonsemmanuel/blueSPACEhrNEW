@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Building2, DollarSign, CreditCard, Bell, Shield, Database, Download, Upload, RefreshCw, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Eye, EyeOff, Send, Plus } from 'lucide-react'
+import { Settings, Building2, DollarSign, CreditCard, Bell, Shield, Database, Download, Upload, RefreshCw, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Eye, EyeOff, Send, Plus, User, KeyRound, Lock } from 'lucide-react'
 import api from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import Card from '../components/ui/Card'
@@ -15,12 +15,12 @@ const PAY_SCHEDULES = ['weekly', 'biweekly', 'monthly']
 const CURRENCIES = ['GHS', 'USD', 'EUR', 'GBP', 'NGN']
 
 export default function AccountSettings() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const isMgmt = user?.type === 'Management'
   const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState('company')
+  const [activeTab, setActiveTab] = useState(user?.type === 'Management' ? 'company' : 'profile')
   const [initDefaults, setInitDefaults] = useState(false)
   const [reminders, setReminders] = useState([])
   const [reminderLoading, setReminderLoading] = useState(false)
@@ -28,7 +28,22 @@ export default function AccountSettings() {
   const [editingReminder, setEditingReminder] = useState(null)
   const [reminderForm, setReminderForm] = useState({})
 
+  const [profile, setProfile] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+  })
+  const [password, setPassword] = useState({
+    current_password: '',
+    new_password: '',
+    confirm: '',
+  })
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+
   const fetchSettings = async () => {
+    if (!isMgmt) return
     setLoading(true)
     try {
       const res = await api.get('/management/settings')
@@ -50,6 +65,7 @@ export default function AccountSettings() {
   }
 
   const fetchReminders = async () => {
+    if (!isMgmt) return
     setReminderLoading(true)
     try {
       const res = await api.get('/management/reminders')
@@ -78,6 +94,43 @@ export default function AccountSettings() {
       toast.error(err.response?.data?.error || 'Failed to save')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault()
+    if (!profile.name.trim()) { toast.error('Name is required'); return }
+    setSavingProfile(true)
+    try {
+      const res = await api.put('/auth/profile', profile)
+      setUser(prev => ({ ...prev, name: profile.name, phone: profile.phone, address: profile.address }))
+      localStorage.setItem('user', JSON.stringify({ ...JSON.parse(localStorage.getItem('user') || '{}'), name: profile.name }))
+      toast.success(res.data.message)
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update profile')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    if (!password.current_password) { toast.error('Current password is required'); return }
+    if (!password.new_password) { toast.error('New password is required'); return }
+    if (password.new_password.length < 4) { toast.error('Password must be at least 4 characters'); return }
+    if (password.new_password !== password.confirm) { toast.error('Passwords do not match'); return }
+    setChangingPassword(true)
+    try {
+      const res = await api.put('/auth/password', {
+        current_password: password.current_password,
+        new_password: password.new_password,
+      })
+      toast.success(res.data.message)
+      setPassword({ current_password: '', new_password: '', confirm: '' })
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to change password')
+    } finally {
+      setChangingPassword(false)
     }
   }
 
@@ -196,14 +249,21 @@ export default function AccountSettings() {
 
   const upcomingReminders = (reminders || []).filter(r => r.status === 'Pending' && new Date(r.due_date) >= new Date()).slice(0, 5)
 
-  const tabs = [
-    { id: 'company', label: 'Company', icon: Building2 },
-    { id: 'payroll', label: 'Payroll', icon: CreditCard },
-    { id: 'expenses', label: 'Expenses', icon: DollarSign },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'data', label: 'Data', icon: Database },
-  ]
+  const tabs = isMgmt 
+    ? [
+        { id: 'company', label: 'Company', icon: Building2 },
+        { id: 'payroll', label: 'Payroll', icon: CreditCard },
+        { id: 'expenses', label: 'Expenses', icon: DollarSign },
+        { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'security', label: 'Security', icon: Shield },
+        { id: 'data', label: 'Data', icon: Database },
+        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'password', label: 'Password', icon: KeyRound },
+      ]
+    : [
+        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'password', label: 'Password', icon: KeyRound },
+      ]
 
   return (
     <div className="w-full">
@@ -214,11 +274,11 @@ export default function AccountSettings() {
               <Settings size={18} className="text-deep-600" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-deep-600">Account Settings</h1>
-              <p className="text-xs text-gray-500">Manage organization settings and preferences</p>
+              <h1 className="text-lg font-bold text-deep-600">{isMgmt ? 'Account Settings' : 'My Account'}</h1>
+              <p className="text-xs text-gray-500">{isMgmt ? 'Manage organization settings and preferences' : 'Manage your profile and password'}</p>
             </div>
           </div>
-          {Object.keys(settings).length === 0 && !initDefaults && (
+          {isMgmt && Object.keys(settings).length === 0 && !initDefaults && (
             <Button variant="outline" onClick={() => setInitDefaults(true)}>
               <RefreshCw size={14} /> Initialize Defaults
             </Button>

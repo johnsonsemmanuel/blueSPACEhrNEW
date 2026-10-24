@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Receipt, Plus, Filter, Download, ChevronDown, ChevronUp, Trash2, Edit, Calendar, CreditCard, DollarSign, BarChart2, X, Search, MoreVertical, AlertTriangle, Bell } from 'lucide-react'
+import { Receipt, Plus, Filter, Download, ChevronDown, ChevronUp, Trash2, Edit, Calendar, CreditCard, DollarSign, BarChart2, X, Search, MoreVertical, AlertTriangle, Bell, Clock } from 'lucide-react'
 import api from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import Card from '../components/ui/Card'
@@ -20,28 +20,21 @@ export default function Expenses() {
   const [expenses, setExpenses] = useState([])
   const [summary, setSummary] = useState(null)
   const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({})
-  const [filters, setFilters] = useState({ startDate: '', endDate: '', category: '', branchId: '', departmentId: '' })
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [showFilters, setShowFilters] = useState(false)
-  const [branches, setBranches] = useState([])
-  const [departments, setDepartments] = useState([])
+  const [reminders, setReminders] = useState([])
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderForm, setReminderForm] = useState({}) 
 
   const fetchData = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ page, limit: 50, ...filters })
-      const [expRes, sumRes, catRes, brRes, deptRes] = await Promise.all([
+      const [expRes, sumRes, catRes, brRes, deptRes, remRes] = await Promise.all([
         api.get(`/expenses?${params}`),
         api.get(`/expenses/summary?${params}`),
         api.get('/expenses/categories'),
         api.get('/employees/branches'),
         api.get('/employees/departments'),
+        api.get('/management/reminders'),
       ])
       setExpenses(expRes.data.data)
       setTotalPages(Math.ceil(expRes.data.total / 50))
@@ -49,6 +42,7 @@ export default function Expenses() {
       setCategories(catRes.data)
       setBranches(brRes.data)
       setDepartments(deptRes.data)
+      setReminders(remRes.data)
     } catch (err) {
       console.error('Fetch error:', err)
       toast.error('Failed to load expenses')
@@ -81,12 +75,29 @@ export default function Expenses() {
     }
     setSaving(true)
     try {
+      let res
       if (editing) {
-        await api.put(`/expenses/${editing.id}`, form)
+        res = await api.put(`/expenses/${editing.id}`, form)
         toast.success('Expense updated')
       } else {
-        await api.post('/expenses', form)
+        res = await api.post('/expenses', form)
         toast.success('Expense added')
+      }
+      // Auto-create reminder for payments due
+      if (form.category === 'Utilities' || form.category === 'Rent' || form.category === 'Maintenance' || form.category === 'Insurance' || form.category === 'Loans' || form.category === 'Subscriptions') {
+        try {
+          await api.post('/management/reminders', {
+            title: `${form.category}: ${form.description}`,
+            description: `Payment for ${form.description}`,
+            amount: form.amount,
+            due_date: form.date,
+            category: form.category,
+            reminder_days_before: 3,
+          })
+          toast.success('Payment reminder created')
+        } catch (remErr) {
+          console.error('Failed to create reminder:', remErr)
+        }
       }
       closeModal()
       fetchData()
@@ -197,7 +208,46 @@ export default function Expenses() {
           )}
         </Card>
 
-        {/* Category Breakdown */}
+        {/* Payment Reminders Alert */}
+        {(reminders || []).filter(r => r.status === 'Pending' && new Date(r.due_date) <= new Date(Date.now() + 7 * 86400000)).length > 0 && (
+          <Card className="mb-6 bg-amber-50 border-amber-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Bell size={18} className="text-amber-600" />
+                <h3 className="text-sm font-semibold text-amber-800">Upcoming Payments</h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate('/account-settings')}>
+                Manage Reminders
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {(reminders || []).filter(r => r.status === 'Pending' && new Date(r.due_date) <= new Date(Date.now() + 7 * 86400000)).slice(0, 5).map(r => (
+                <div key={r.id} className="flex items-center justify-between p-2 bg-white rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Clock size={14} className="text-amber-600" />
+                    <div>
+                      <p className="text-sm font-medium text-deep-600">{r.title}</p>
+                      <p className="text-xs text-gray-500">Due: {new Date(r.due_date).toLocaleDateString('en-GB')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {r.amount && <span className="text-sm font-bold text-amber-600">₵{Number(r.amount).toLocaleString()}</span>}
+                    <Button size="sm" onClick={async () => {
+                      try {
+                        await api.post(`/management/reminders/${r.id}/notify`)
+                        toast.success('Reminder sent to management')
+                      } catch (err) {
+                        toast.error('Failed to send reminder')
+                      }
+                    }}>
+                      <Bell size={13} /> Remind
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
         {summary?.byCategory && summary.byCategory.length > 0 && (
           <Card className="mb-6">
             <h3 className="text-sm font-semibold text-deep-600 mb-3 flex items-center gap-2">
@@ -219,9 +269,14 @@ export default function Expenses() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-deep-600">All Expenses</h3>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <Download size={14} /> Export CSV
-              </Button>
+        <Button variant="outline" size="sm" onClick={() => {
+          const today = new Date().toISOString().split('T')[0]
+          setForm({ date: today, category: 'Utilities', description: 'Quick entry', amount: '', payment_method: 'Cash', receipt_url: '', branch_id: '', department_id: '' })
+          setEditing(null)
+          setModalOpen(true)
+        }}>
+          <Plus size={14} /> Quick Add
+        </Button>
             </div>
           </div>
           {loading ? (
@@ -300,13 +355,23 @@ export default function Expenses() {
         </Card>
 
         {/* Add/Edit Modal */}
-        <Modal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Expense' : 'Add Expense'} size="lg">
+        <Modal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Expense' : 'Add Expense'} size="xl">
           <form onSubmit={e => { e.preventDefault(); handleSave() }} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Date *" type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
               <Select label="Category *" placeholder="Select category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} required
                 options={CATEGORIES.map(c => ({value: c, label: c}))} />
-              <Input label="Description *" placeholder="Expense description" value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
+              <div className="md:col-span-2">
+                <label className="form-label mb-1">Description *</label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm({...form, description: e.target.value})}
+                  placeholder="Expense description"
+                  rows={3}
+                  className="form-input"
+                  required
+                />
+              </div>
               <Input label="Amount *" type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
               <Select label="Payment Method" placeholder="Select method" value={form.payment_method} onChange={e => setForm({...form, payment_method: e.target.value})}
                 options={PAYMENT_METHODS.map(p => ({value: p, label: p}))} />
