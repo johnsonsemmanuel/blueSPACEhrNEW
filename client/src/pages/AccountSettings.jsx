@@ -334,7 +334,7 @@ export default function AccountSettings() {
                   <Badge key={i} variant="info" className="gap-1">
                     {cat}
                     <button onClick={() => {
-                      const cats = [...getSetting('expense_categories')]
+                      const cats = [...(getSetting('expense_categories') || [])]
                       cats.splice(i, 1)
                       handleSave('expense_categories', cats)
                     }} className="ml-1 hover:text-red-600">×</button>
@@ -342,7 +342,7 @@ export default function AccountSettings() {
                 ))}
                 <Input placeholder="New category" value={''} onChange={e => {}} className="w-auto" onKeyDown={e => {
                   if (e.key === 'Enter' && e.target.value.trim()) {
-                    const cats = [...getSetting('expense_categories'), e.target.value.trim()]
+                    const cats = [...(getSetting('expense_categories') || []), e.target.value.trim()]
                     handleSave('expense_categories', cats)
                     e.target.value = ''
                   }
