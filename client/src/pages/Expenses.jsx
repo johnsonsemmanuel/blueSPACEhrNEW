@@ -198,7 +198,7 @@ export default function Expenses() {
         </Card>
 
         {/* Category Breakdown */}
-        {summary?.byCategory?.length > 0 && (
+        {summary?.byCategory && summary.byCategory.length > 0 && (
           <Card className="mb-6">
             <h3 className="text-sm font-semibold text-deep-600 mb-3 flex items-center gap-2">
               <BarChart2 size={14} /> By Category
@@ -228,7 +228,7 @@ export default function Expenses() {
             <div className="flex justify-center py-8">
               <div className="h-6 w-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : expenses.length === 0 ? (
+          ) : (expenses || []).length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <Receipt size={32} className="mx-auto mb-2 opacity-50" />
               <p className="text-sm">No expenses recorded</p>
@@ -249,7 +249,7 @@ export default function Expenses() {
                   </tr>
                 </thead>
                 <tbody className="text-deep-600">
-                  {expenses.map((exp) => (
+                  {expenses && expenses.map((exp) => (
                     <tr key={exp.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 pr-4 text-gray-500">{new Date(exp.date).toLocaleDateString('en-GB')}</td>
                       <td className="py-3 pr-4">

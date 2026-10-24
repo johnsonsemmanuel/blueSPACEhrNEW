@@ -322,7 +322,7 @@ export default function Payslips() {
             <div className="flex justify-center py-8">
               <div className="h-6 w-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : payslips.length === 0 ? (
+          ) : (payslips || []).length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <CreditCard size={32} className="mx-auto mb-2 opacity-50" />
               <p className="text-sm">No payslips found</p>
@@ -345,7 +345,7 @@ export default function Payslips() {
                   </tr>
                 </thead>
                 <tbody className="text-deep-600">
-                  {payslips.map((p) => (
+                  {payslips && payslips.map((p) => (
                     <tr key={p.id} className="border-t border-gray-50 hover:bg-gray-50/50">
                       <td className="py-3 pr-4 font-medium">{p.employee_name} <span className="text-gray-400 text-xs">({p.employee_code})</span></td>
                       <td className="py-3 pr-4 text-gray-500 text-xs">

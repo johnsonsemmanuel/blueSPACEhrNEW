@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Building2, DollarSign, CreditCard, Bell, Shield, Database, Download, Upload, RefreshCw, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Eye, EyeOff, Send } from 'lucide-react'
+import { Settings, Building2, DollarSign, CreditCard, Bell, Shield, Database, Download, Upload, RefreshCw, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Eye, EyeOff, Send, Plus } from 'lucide-react'
 import api from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import Card from '../components/ui/Card'
