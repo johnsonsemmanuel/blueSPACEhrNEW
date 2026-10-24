@@ -263,7 +263,7 @@ export default function Payslips() {
         </Card>
 
         {/* Salary Config Overview */}
-        {isMgmt && salaries.length > 0 && (
+        {isMgmt && (salaries || []).length > 0 && (
           <Card className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-deep-600">Salary Configurations</h3>
@@ -286,7 +286,7 @@ export default function Payslips() {
                   </tr>
                 </thead>
                 <tbody className="text-deep-600">
-                  {salaries.map((sal) => (
+                  {(salaries || []).map((sal) => (
                     <tr key={sal.employee_id} className="border-t border-gray-50 hover:bg-gray-50/50">
                       <td className="py-3 pr-4 font-medium">{sal.employee_name}</td>
                       <td className="py-3 pr-4">₵{Number(sal.basic_salary).toLocaleString()}</td>
