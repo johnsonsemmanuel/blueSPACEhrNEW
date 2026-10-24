@@ -27,7 +27,8 @@ export default function Expenses() {
   const [totalPages, setTotalPages] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [branches, setBranches] = useState([])
-  const [departments, setDepartments] = useState([]) 
+  const [departments, setDepartments] = useState([])
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', category: '', branchId: '', departmentId: '' }) 
 
   const fetchData = async () => {
     setLoading(true)
