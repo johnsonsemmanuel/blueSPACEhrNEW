@@ -208,7 +208,7 @@ export default function Payslips() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-deep-600">Payslips</h1>
-              <p className="text-xs text-gray-500">{payslips.length} payslips • {summary?.total || 0} total</p>
+              <p className="text-xs text-gray-500">{(payslips || []).length} payslips • {summary?.total || 0} total</p>
             </div>
           </div>
           {isMgmt && (

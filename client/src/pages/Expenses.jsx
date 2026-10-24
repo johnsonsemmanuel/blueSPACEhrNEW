@@ -146,7 +146,7 @@ export default function Expenses() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-deep-600">Daily Expenses</h1>
-              <p className="text-xs text-gray-500">{expenses.length} expenses • {summary?.total?.toLocaleString() || 0} total</p>
+              <p className="text-xs text-gray-500">{(expenses || []).length} expenses • {summary?.total?.toLocaleString() || 0} total</p>
             </div>
           </div>
           {isMgmt && (
