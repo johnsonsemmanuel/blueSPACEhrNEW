@@ -163,12 +163,12 @@ export default function Expenses() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-deep-100 flex items-center justify-center">
-              <Receipt size={18} className="text-deep-600" />
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-sm">
+              <Receipt size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-deep-600">Daily Expenses</h1>
-              <p className="text-xs text-gray-500">{(expenses || []).length} expenses • {summary?.total?.toLocaleString() || 0} total</p>
+              <h1 className="text-lg font-bold text-deep-600">Expense Management</h1>
+              <p className="text-xs text-gray-500">Track, manage & remind payments • {(expenses || []).length} entries</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -181,17 +181,21 @@ export default function Expenses() {
           </div>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {summaryCards.map((card, i) => (
-            <Card key={i} className="hover:shadow-md transition-shadow">
+          {[
+            { label: 'Today', value: (expenses || []).filter(e => e.date === today).reduce((s,e)=>s+Number(e.amount),0), icon: Calendar, color: 'from-brand-500 to-brand-600' },
+            { label: 'This Week', value: (expenses || []).filter(e => e.date >= thisWeekStart).reduce((s,e)=>s+Number(e.amount),0), icon: Calendar, color: 'from-blue-500 to-blue-600' },
+            { label: 'This Month', value: (expenses || []).filter(e => e.date?.startsWith(today.slice(0,7))).reduce((s,e)=>s+Number(e.amount),0), icon: Calendar, color: 'from-emerald-500 to-emerald-600' },
+            { label: 'Total', value: summary?.total || 0, icon: DollarSign, color: 'from-purple-500 to-purple-600' },
+          ].map((card, i) => (
+            <Card key={i} className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.color}`}>
+                <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center shadow-sm`}>
                   <card.icon size={18} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{card.label}</p>
-                  <p className="text-xl font-bold text-deep-600">₵{Number(card.value).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                  <p className="text-xs text-gray-500">{card.label}</p>
+                  <p className="text-lg font-bold text-deep-600">₵{Number(card.value).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
                 </div>
               </div>
             </Card>

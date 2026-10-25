@@ -420,9 +420,11 @@ export default function AccountSettings() {
                 <h3 className="text-sm font-semibold text-deep-600 flex items-center gap-2">
                   <Bell size={14} /> Payment Reminders
                 </h3>
-                <Button onClick={() => openReminderModal()} size="sm">
-                  <Plus size={13} /> Add Reminder
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => openReminderModal()} size="sm">
+                    <Plus size={13} /> Add Reminder
+                  </Button>
+                </div>
               </div>
 
               {upcomingReminders && Array.isArray(upcomingReminders) && upcomingReminders.length > 0 && (
@@ -666,18 +668,16 @@ export default function AccountSettings() {
         {/* Reminder Modal */}
         <Modal open={reminderModal} onClose={closeReminderModal} title={editingReminder ? 'Edit Reminder' : 'Add Payment Reminder'} size="lg">
           <form onSubmit={e => { e.preventDefault(); handleReminderSave() }} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Title *" placeholder="e.g., Rent Payment" value={reminderForm.title} onChange={e => setReminderForm({...reminderForm, title: e.target.value})} required />
-              <Input label="Due Date *" type="date" value={reminderForm.due_date} onChange={e => setReminderForm({...reminderForm, due_date: e.target.value})} required />
-              <Input label="Amount" type="number" step="0.01" placeholder="0.00" value={reminderForm.amount} onChange={e => setReminderForm({...reminderForm, amount: e.target.value})} />
-              <Select label="Category" placeholder="Select category" value={reminderForm.category} onChange={e => setReminderForm({...reminderForm, category: e.target.value})}
-                options={['General', 'Rent', 'Utilities', 'Salaries', 'Taxes', 'Insurance', 'Loans', 'Subscriptions', 'Other'].map(c => ({value: c, label: c}))} />
-              <Select label="Branch" placeholder="All branches" value={reminderForm.branch_id} onChange={e => setReminderForm({...reminderForm, branch_id: e.target.value})}
-                options={[{value:'', label:'All branches'}]} />
-              <Select label="Department" placeholder="All departments" value={reminderForm.department_id} onChange={e => setReminderForm({...reminderForm, department_id: e.target.value})}
-                options={[{value:'', label:'All departments'}]} />
-              <Input label="Remind Before (days)" type="number" min="1" max="30" placeholder="3" value={reminderForm.reminder_days_before} onChange={e => setReminderForm({...reminderForm, reminder_days_before: parseInt(e.target.value)})} />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input label="Title *" placeholder="e.g., Rent Payment / Subscription Renewal" value={reminderForm.title} onChange={e => setReminderForm({...reminderForm, title: e.target.value})} required />
+                  <Input label="Due Date *" type="date" value={reminderForm.due_date} onChange={e => setReminderForm({...reminderForm, due_date: e.target.value})} required />
+                  <Input label="Amount" type="number" step="0.01" placeholder="0.00" value={reminderForm.amount} onChange={e => setReminderForm({...reminderForm, amount: e.target.value})} />
+                  <Select label="Category" placeholder="Select category" value={reminderForm.category} onChange={e => setReminderForm({...reminderForm, category: e.target.value})}
+                    options={['General', 'Rent', 'Utilities', 'Salaries', 'Taxes', 'Insurance', 'Loans', 'Subscriptions', 'Maintenance', 'Other'].map(c => ({value: c, label: c}))} />
+                  <Input label="Remind Before (days)" type="number" min="1" max="60" placeholder="3" value={reminderForm.reminder_days_before} onChange={e => setReminderForm({...reminderForm, reminder_days_before: parseInt(e.target.value) || 3})} />
+                  <Select label="Priority" value={reminderForm.priority || 'Medium'} onChange={e => setReminderForm({...reminderForm, priority: e.target.value})}
+                    options={[{value:'Low',label:'Low'},{value:'Medium',label:'Medium'},{value:'High',label:'High'},{value:'Urgent',label:'Urgent'}]} />
+                </div>
             <div>
               <label className="form-label mb-1">Description</label>
               <textarea value={reminderForm.description} onChange={e => setReminderForm({...reminderForm, description: e.target.value})} rows={3} className="form-input" placeholder="Additional details..." />
