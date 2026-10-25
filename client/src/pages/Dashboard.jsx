@@ -353,68 +353,61 @@ export default function Dashboard() {
         <div className="mb-6">
           <Card>
             <h3 className="text-sm font-semibold text-deep-600 mb-4 flex items-center gap-2">
-              <TrendingUp size={14} className="text-purple-600" />
+              <Zap size={14} className="text-brand-600" />
               Quick Actions
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
+              <button
+                className="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-100 bg-white hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left w-full"
                 onClick={() => navigate('/expenses')}
               >
-                <div className="flex items-center gap-2 w-full">
-                  <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <Receipt size={16} className="text-amber-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-deep-600 text-sm">Expenses</p>
-                    <p className="text-[11px] text-gray-500">Track daily expenses</p>
-                  </div>
-                  {expenseSummary && (
-                    <p className="text-sm font-bold text-amber-600 flex-shrink-0">
-                      ₵{Number(expenseSummary.total || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
-                    </p>
-                  )}
+                <div className="h-10 w-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
+                  <Receipt size={18} className="text-amber-600" />
                 </div>
-              </Button>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-deep-600 text-sm">Add Expense</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Track daily expenses & reminders</p>
+                </div>
+                {expenseSummary && (
+                  <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded flex-shrink-0">
+                    ₵{Number(expenseSummary.total || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                  </span>
+                )}
+                <ArrowRight size={16} className="text-gray-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              </button>
 
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
+              <button
+                className="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-100 bg-white hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left w-full"
                 onClick={() => navigate('/payslips')}
               >
-                <div className="flex items-center gap-2 w-full">
-                  <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <CreditCard size={16} className="text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-deep-600 text-sm">Payslips</p>
-                    <p className="text-[11px] text-gray-500">Manage payroll</p>
-                  </div>
-                  {payslipSummary && (
-                    <p className="text-sm font-bold text-blue-600 flex-shrink-0">
-                      {payslipSummary.total || 0} payslips
-                    </p>
-                  )}
+                <div className="h-10 w-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <CreditCard size={18} className="text-blue-600" />
                 </div>
-              </Button>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-deep-600 text-sm">Generate Payslip</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Manage payroll & salaries</p>
+                </div>
+                {payslipSummary && (
+                  <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
+                    {payslipSummary.total || 0}
+                  </span>
+                )}
+                <ArrowRight size={16} className="text-gray-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              </button>
 
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-start justify-center gap-1.5 text-left hover:border-brand-300 hover:bg-brand-50"
+              <button
+                className="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-100 bg-white hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left w-full"
                 onClick={() => navigate('/account-settings')}
               >
-                <div className="flex items-center gap-2 w-full">
-                  <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Settings size={16} className="text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-deep-600 text-sm">Account Settings</p>
-                    <p className="text-[11px] text-gray-500">Company & payroll config</p>
-                  </div>
-                  <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
+                <div className="h-10 w-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+                  <Settings size={18} className="text-purple-600" />
                 </div>
-              </Button>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-deep-600 text-sm">Configure Settings</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Company, payroll & reminders</p>
+                </div>
+                <ArrowRight size={16} className="text-gray-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              </button>
             </div>
           </Card>
         </div>
