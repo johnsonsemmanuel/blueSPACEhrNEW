@@ -16,7 +16,9 @@ const CATEGORIES = ['Office Supplies', 'Utilities', 'Travel', 'Meals', 'Equipmen
 const PAYMENT_METHODS = ['Cash', 'Card', 'Bank Transfer', 'Mobile Money']
 
 export default function Expenses() {
+  const { user } = useAuth()
   const navigate = useNavigate()
+  const isMgmt = user?.type === 'Management'
   const [expenses, setExpenses] = useState([])
   const [summary, setSummary] = useState(null)
   const [categories, setCategories] = useState([])
