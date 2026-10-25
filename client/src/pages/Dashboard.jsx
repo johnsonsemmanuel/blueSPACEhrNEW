@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle, Megaphone, Send, Plus, Receipt, CreditCard, Settings, ExternalLink } from 'lucide-react'
+import { CalendarCheck, Clock, TrendingUp, Users, FileText, CheckCircle, XCircle, CalendarPlus, Calendar, Sun, Moon, Sunrise, UserCheck, UserRoundCog, ArrowRight, AlertCircle, AlertTriangle, Megaphone, Send, Plus, Receipt, CreditCard, Settings, ExternalLink, Zap } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../lib/api'
 import Card from '../components/ui/Card'
