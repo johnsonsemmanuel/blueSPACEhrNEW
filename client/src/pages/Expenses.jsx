@@ -404,46 +404,69 @@ export default function Expenses() {
         </Card>
 
         {/* Add/Edit Modal */}
-        <Modal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Expense' : 'Add Expense'} size="xl">
-          <form onSubmit={e => { e.preventDefault(); handleSave() }} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Date *" type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
-              <Select label="Category *" placeholder="Select category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} required
-                options={CATEGORIES.map(c => ({value: c, label: c}))} />
-              <div className="md:col-span-2">
+        <Modal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Expense' : 'Add Expense'} size="2xl">
+          <form onSubmit={e => { e.preventDefault(); handleSave() }} className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-deep-600 border-b pb-2">Basic Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input label="Date *" type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
+                <Input label="Due Date" type="date" value={form.due_date} onChange={e => setForm({...form, due_date: e.target.value})} />
+                <Select label="Category *" placeholder="Select category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} required
+                  options={CATEGORIES.map(c => ({value: c, label: c}))} />
+              </div>
+              <div>
                 <label className="form-label mb-1">Description *</label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm({...form, description: e.target.value})}
                   placeholder="Expense description"
-                  rows={3}
+                  rows={2}
                   className="form-input"
                   required
                 />
               </div>
-              <Input label="Due Date" type="date" value={form.due_date} onChange={e => setForm({...form, due_date: e.target.value})} />
-              <Input label="Vendor Name" value={form.vendor_name} onChange={e => setForm({...form, vendor_name: e.target.value})} placeholder="e.g., ECG, Vodafone" />
-              <Input label="Invoice Number" value={form.invoice_number} onChange={e => setForm({...form, invoice_number: e.target.value})} />
-              <Select label="Status" value={form.status || 'Pending'} onChange={e => setForm({...form, status: e.target.value})}
-                options={[{value:'Pending',label:'Pending'},{value:'Paid',label:'Paid'},{value:'Overdue',label:'Overdue'}]} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2 mt-6">
-                <input type="checkbox" id="recurring" checked={form.is_recurring || false} onChange={e => setForm({...form, is_recurring: e.target.checked})} className="rounded" />
-                <label htmlFor="recurring" className="text-sm text-gray-700">Recurring Expense</label>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-deep-600 border-b pb-2">Payment Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input label="Amount *" type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
+                <Select label="Payment Method" placeholder="Select method" value={form.payment_method} onChange={e => setForm({...form, payment_method: e.target.value})}
+                  options={PAYMENT_METHODS.map(p => ({value: p, label: p}))} />
+                <Select label="Status" value={form.status || 'Pending'} onChange={e => setForm({...form, status: e.target.value})}
+                  options={[{value:'Pending',label:'Pending'},{value:'Paid',label:'Paid'},{value:'Overdue',label:'Overdue'}]} />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input label="Vendor Name" value={form.vendor_name} onChange={e => setForm({...form, vendor_name: e.target.value})} placeholder="e.g., ECG, Vodafone" />
+                <Input label="Invoice Number" value={form.invoice_number} onChange={e => setForm({...form, invoice_number: e.target.value})} />
+                <Input label="Receipt URL" type="url" placeholder="https://..." value={form.receipt_url} onChange={e => setForm({...form, receipt_url: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select label="Branch" placeholder="Select branch" value={form.branch_id} onChange={e => setForm({...form, branch_id: e.target.value})}
+                  options={branches.map(b => ({value: b.id, label: b.name}))} />
+                <Select label="Department" placeholder="Select department" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}
+                  options={departments.map(d => ({value: d.id, label: d.name}))} />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-deep-600 border-b pb-2 flex items-center gap-2">
+                <input type="checkbox" id="recurring" checked={form.is_recurring || false} onChange={e => setForm({...form, is_recurring: e.target.checked})} className="rounded" />
+                <label htmlFor="recurring">Recurring Expense</label>
+              </h4>
               {form.is_recurring && (
-                <>
-                  <Select label="Recurrence" value={form.recurrence_type} onChange={e => setForm({...form, recurrence_type: e.target.value})}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Select label="Recurrence Type" value={form.recurrence_type} onChange={e => setForm({...form, recurrence_type: e.target.value})}
                     options={[{value:'daily',label:'Daily'},{value:'weekly',label:'Weekly'},{value:'monthly',label:'Monthly'},{value:'yearly',label:'Yearly'}]} />
                   <Input label="Interval" type="number" min="1" value={form.recurrence_interval || 1} onChange={e => setForm({...form, recurrence_interval: parseInt(e.target.value)})} />
-                  <Input label="End Date" type="date" value={form.recurrence_end_date} onChange={e => setForm({...form, recurrence_end_date: e.target.value})} />
-                </>
+                  <Input label="Recurrence End Date" type="date" value={form.recurrence_end_date} onChange={e => setForm({...form, recurrence_end_date: e.target.value})} />
+                </div>
               )}
             </div>
+
             <div>
               <label className="form-label mb-1">Notes</label>
-              <textarea value={form.notes || ''} onChange={e => setForm({...form, notes: e.target.value})} rows={2} className="form-input" placeholder="Additional notes..." />
+              <textarea value={form.notes || ''} onChange={e => setForm({...form, notes: e.target.value})} rows={3} className="form-input" placeholder="Additional notes..." />
             </div>
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
               <Button type="button" variant="outline" onClick={closeModal}><X size={14} /> Cancel</Button>

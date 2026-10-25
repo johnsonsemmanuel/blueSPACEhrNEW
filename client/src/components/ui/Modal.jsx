@@ -23,7 +23,9 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-lg',
-    xl: 'max-w-xl',
+    xl: 'max-w-2xl',
+    '2xl': 'max-w-4xl',
+    full: 'max-w-6xl'
   }
 
   return (
