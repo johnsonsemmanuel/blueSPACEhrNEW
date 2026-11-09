@@ -32,6 +32,41 @@ async function logEmail(to, subject, status, errorMessage) {
   }
 }
 
+const RATE_LIMIT_DELAY_MS = 120;
+let lastSendTime = 0;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function rateLimitedSend(fn) {
+  const now = Date.now();
+  const elapsed = now - lastSendTime;
+  if (elapsed < RATE_LIMIT_DELAY_MS) {
+    await sleep(RATE_LIMIT_DELAY_MS - elapsed);
+  }
+  lastSendTime = Date.now();
+
+  let retries = 0;
+  const maxRetries = 3;
+  while (retries <= maxRetries) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err.message || '';
+      const isRateLimit = msg.includes('Too many requests') || msg.includes('rate limit') || err.status === 429;
+      if (isRateLimit && retries < maxRetries) {
+        const backoff = Math.pow(2, retries) * 1000;
+        console.warn(`[email] Rate limited, retrying in ${backoff}ms (attempt ${retries + 1}/${maxRetries})`);
+        await sleep(backoff);
+        retries++;
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 async function sendEmail({ to, subject, html }) {
   try {
     const client = getClient();
@@ -40,11 +75,13 @@ async function sendEmail({ to, subject, html }) {
       await logEmail(to, subject, 'skipped', 'No API key configured');
       return false;
     }
-    await client.emails.send({
-      from: process.env.RESEND_FROM || 'noreply@bluespacehr.com',
-      to,
-      subject,
-      html,
+    await rateLimitedSend(async () => {
+      await client.emails.send({
+        from: process.env.RESEND_FROM || 'noreply@bluespacehr.com',
+        to,
+        subject,
+        html,
+      });
     });
     console.log(`[email] Sent to ${to}: "${subject}"`);
     await logEmail(to, subject, 'sent', null);
