@@ -3,6 +3,7 @@ const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
 const { logAction, getClientIp } = require('../utils/logger');
 const { sendEmail } = require('../services/email');
+const { sendTemplatedSms, normalizePhone } = require('../services/sms');
 
 const router = express.Router();
 
@@ -372,6 +373,21 @@ router.post('/reminders/:id/notify', authenticate, authorize('Management'), asyn
       }
     }
 
+    // Send SMS
+    for (const recipient of recipients) {
+      const phone = normalizePhone(recipient.phone);
+      if (phone) {
+        await sendTemplatedSms('payment_reminder', phone, {
+          recipient_name: recipient.name,
+          title: reminder.title,
+          due_date: reminder.due_date,
+          category: reminder.category,
+          amount: reminder.amount,
+          description: reminder.description,
+        });
+      }
+    }
+
     // Update last reminded
     await pool.query(
       'UPDATE payment_reminders SET last_reminded_at = NOW(), updated_at = NOW() WHERE id = ?',
@@ -394,7 +410,7 @@ router.post('/reminders/:id/notify', authenticate, authorize('Management'), asyn
       ip: getClientIp(req), severity: 'INFO',
     });
 
-    res.json({ message: 'Reminders sent via email and notifications' });
+    res.json({ message: 'Reminders sent via email and SMS' });
   } catch (err) {
     console.error('Reminder notify error:', err);
     res.status(500).json({ error: 'Server error' });

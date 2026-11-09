@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
 const { sendHandoverNotification, sendLeaveSubmittedNotification, sendLeaveStatusNotification, sendLeaveExtendedNotification } = require('../services/email');
+const { sendTemplatedSms, normalizePhone } = require('../services/sms');
 const { logAction, getClientIp } = require('../utils/logger');
 
 const router = express.Router();
@@ -360,7 +361,7 @@ router.post('/', authenticate, async (req, res) => {
 
     try {
       const [managers] = await pool.query(
-        `SELECT u.id, u.email, u.name FROM users u WHERE u.type IN ('Management','Manager')`
+        `SELECT u.id, u.email, u.name, u.phone FROM users u WHERE u.type IN ('Management','Manager')`
       );
       for (const m of managers) {
         await pool.query(
@@ -376,11 +377,21 @@ router.post('/', authenticate, async (req, res) => {
           endDate: end_date,
           reason: leave_reason,
         });
+        const phone = normalizePhone(m.phone);
+        if (phone) {
+          await sendTemplatedSms('staff_on_leave', phone, {
+            recipient_name: m.name,
+            employee_name: req.user.name,
+            leave_type: leaveType[0].title,
+            end_date: end_date,
+            handover_name: '',
+          });
+        }
       }
 
       if (handover_to) {
         const [handoverUsers] = await pool.query(
-          `SELECT u.id AS user_id, u.name, u.email
+          `SELECT u.id AS user_id, u.name, u.email, u.phone
            FROM employees he
            JOIN users u ON he.user_id = u.id
            WHERE he.id = ?`,
@@ -401,6 +412,16 @@ router.post('/', authenticate, async (req, res) => {
             endDate: end_date,
             notes: handover_notes,
           });
+          const phone = normalizePhone(hu.phone);
+          if (phone) {
+            await sendTemplatedSms('staff_on_leave', phone, {
+              recipient_name: hu.name,
+              employee_name: req.user.name,
+              leave_type: leaveType[0].title,
+              end_date: end_date,
+              handover_name: '',
+            });
+          }
         }
       }
     } catch (notifyErr) {

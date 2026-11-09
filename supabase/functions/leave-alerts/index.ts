@@ -10,7 +10,7 @@
 // run or a same-day approval is picked up on the next run instead of being lost.
 //
 // Env vars: CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-//           RESEND_API_KEY, INTECH_SMS_APP_KEY, INTECH_SMS_SENDER, INTECH_SMS_URL
+//           RESEND_API_KEY, INTEK_SMS_API_KEY, INTEK_SMS_SENDER_ID, INTEK_SMS_URL
 //
 // Deploy with JWT verification OFF (pg_cron sends a custom bearer secret, not a
 // Supabase JWT):
