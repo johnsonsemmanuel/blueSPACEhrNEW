@@ -79,6 +79,46 @@ async function insertNotifications(rows) {
 
 const today = () => new Date().toISOString().split('T')[0]
 
+async function getDateRange(start, end) {
+  const dates = []
+  const current = new Date(start)
+  const last = new Date(end)
+  while (current <= last) {
+    dates.push(current.toISOString().split('T')[0])
+    current.setDate(current.getDate() + 1)
+  }
+  return dates
+}
+
+async function countWorkingDays(start, end) {
+  const allDates = await getDateRange(start, end)
+  let holidays = []
+  try {
+    const h = await supabase.from('holidays').select('date, end_date')
+    holidays = h.data || []
+  } catch { /* ignore */ }
+  const holidaySet = new Set()
+  holidays.forEach(h => {
+    const hDates = getDateRangeSync(h.date, h.end_date || h.date)
+    hDates.forEach(d => holidaySet.add(d))
+  })
+  return allDates.filter(d => {
+    const day = new Date(d).getDay()
+    return day !== 0 && day !== 6 && !holidaySet.has(d)
+  }).length
+}
+
+function getDateRangeSync(start, end) {
+  const dates = []
+  const current = new Date(start)
+  const last = new Date(end)
+  while (current <= last) {
+    dates.push(current.toISOString().split('T')[0])
+    current.setDate(current.getDate() + 1)
+  }
+  return dates
+}
+
 const ROUTES = {
   'GET /auth/me': async () => {
     const data = await edgeFetch('/me')
